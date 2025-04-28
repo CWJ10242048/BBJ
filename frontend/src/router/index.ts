@@ -132,7 +132,29 @@ const router = createRouter({
         },
         {
           path: 'oj',
-          component: () => import('../views/OJ.vue')
+          component: () => import('../views/OJ/index.vue'),
+          children: [
+            {
+              path: '',
+              redirect: '/oj/problem-list'
+            },
+            {
+              path: 'problem-list',
+              component: () => import('../views/OJ/ProblemList.vue')
+            },
+            {
+              path: 'problem/:id',
+              component: () => import('../views/OJ/ProblemDetail.vue')
+            },
+            {
+              path: 'submissions',
+              component: () => import('../views/OJ/Submissions.vue')
+            },
+            {
+              path: 'leaderboard',
+              component: () => import('../views/OJ/Leaderboard.vue')
+            }
+          ]
         },
         {
           path: 'history',

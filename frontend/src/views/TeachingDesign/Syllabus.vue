@@ -1,4 +1,5 @@
 <template>
+  <div style="color:red">这是Syllabus.vue内容</div>
   <div class="syllabus-container">
     <h2>教学大纲设计</h2>
     <el-card class="box-card">

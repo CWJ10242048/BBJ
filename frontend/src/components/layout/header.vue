@@ -28,7 +28,7 @@
           </el-dropdown>
         </div>
         <div class="icon-div" style="width:120px;">
-          <div class="user-name">超级管理员</div>
+          <div class="user-name">李老师</div>
         </div>
       </div>
     </el-header>

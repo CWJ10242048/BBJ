@@ -136,7 +136,9 @@
     <div class="button-group">
       <el-button type="primary" @click="handleSave">保存</el-button>
       <el-button type="success" @click="handlePreview">预览</el-button>
-      <el-button type="warning" @click="handleExport">导出</el-button>
+      <el-button type="warning" :loading="exporting" @click="handleExport">
+        {{ exporting ? '导出中...' : '导出' }}
+      </el-button>
       <el-button @click="handleReset">重置</el-button>
     </div>
 
@@ -173,6 +175,7 @@
 <script setup lang="ts">
 import { ref, nextTick, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import axios from 'axios'
 
 const typeOptions = [
   { label: '课堂讨论', value: 'discussion' },
@@ -255,6 +258,32 @@ const previewTypes = computed(() => {
   }).join('，')
 })
 
+const exporting = ref(false)
+
+const handleExport = async () => {
+  exporting.value = true
+  try {
+    await new Promise(resolve => setTimeout(resolve, 2000)) // 2秒延迟
+    const response = await axios.get('/api/export/interaction', {
+      responseType: 'blob'
+    })
+    const blob = new Blob([response.data], { type: response.headers['content-type'] })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = '机器学习互动环节设计.docx'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (e) {
+    ElMessage.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
+}
+
 const handleSave = () => {
   // 保存逻辑
   console.log('保存', form.value)
@@ -262,11 +291,6 @@ const handleSave = () => {
 }
 const handlePreview = () => {
   previewVisible.value = true
-}
-const handleExport = () => {
-  // 导出逻辑
-  console.log('导出', form.value)
-  ElMessage.success('导出成功')
 }
 const handleReset = () => {
   form.value = {

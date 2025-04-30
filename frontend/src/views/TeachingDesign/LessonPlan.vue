@@ -266,7 +266,9 @@
     <div class="button-group">
       <el-button type="primary" @click="handleSubmit">保存</el-button>
       <el-button type="success" @click="handlePreview">预览</el-button>
-      <el-button type="warning" @click="handleExport">导出</el-button>
+      <el-button type="warning" :loading="exporting" @click="handleExport">
+        {{ exporting ? '导出中...' : '导出' }}
+      </el-button>
       <el-button @click="handleReset">重置</el-button>
     </div>
 
@@ -293,11 +295,13 @@ import { ref, computed, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Document, Delete } from '@element-plus/icons-vue'
 import { nanoid } from 'nanoid'
+import axios from 'axios'
 
 const formRef = ref()
 const previewVisible = ref(false)
 const uploadProgress = ref(0)
 const uploadStatus = ref('')
+const exporting = ref(false)
 
 const form = ref({
   courseName: '',
@@ -415,9 +419,28 @@ const handlePreview = () => {
   previewVisible.value = true
 }
 
-const handleExport = () => {
-  // TODO: 实现导出功能
-  ElMessage.success('导出成功')
+const handleExport = async () => {
+  exporting.value = true
+  try {
+    await new Promise(resolve => setTimeout(resolve, 2000)) // 2秒延迟
+    const response = await axios.get('/api/export/lessonplan', {
+      responseType: 'blob'
+    })
+    const blob = new Blob([response.data], { type: response.headers['content-type'] })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = '机器学习线性回归教案.docx'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (e) {
+    ElMessage.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 const handleReset = () => {

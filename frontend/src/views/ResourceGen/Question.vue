@@ -90,7 +90,9 @@
     <div class="button-group">
       <el-button type="primary" @click="handleSave">保存</el-button>
       <el-button type="success" @click="handlePreview">预览</el-button>
-      <el-button type="warning" @click="handleExport">导出</el-button>
+      <el-button type="warning" :loading="exporting" @click="handleExport">
+        {{ exporting ? '导出中...' : '导出' }}
+      </el-button>
       <el-button @click="handleReset">重置</el-button>
     </div>
 
@@ -126,6 +128,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import axios from 'axios'
 
 const typeList = [
   { label: '选择题', value: '选择题' },
@@ -139,6 +142,7 @@ const typeList = [
 
 const formRef = ref()
 const previewVisible = ref(false)
+const exporting = ref(false)
 const form = ref({
   mode: '单题',
   difficulty: 3,
@@ -184,8 +188,28 @@ const handleSave = async () => {
 const handlePreview = () => {
   previewVisible.value = true
 }
-const handleExport = () => {
-  ElMessage.success('导出成功')
+const handleExport = async () => {
+  exporting.value = true
+  try {
+    await new Promise(resolve => setTimeout(resolve, 2000)) // 2秒延迟
+    const response = await axios.get('/api/export/question', {
+      responseType: 'blob'
+    })
+    const blob = new Blob([response.data], { type: response.headers['content-type'] })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = '机器学习习题整卷.docx'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (e) {
+    ElMessage.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 const handleReset = () => {
   if (!formRef.value) return

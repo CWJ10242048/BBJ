@@ -253,7 +253,13 @@
     <div class="button-group">
       <el-button type="primary" @click="handleSubmit">保存</el-button>
       <el-button type="success" @click="handlePreview">预览</el-button>
-      <el-button type="warning" @click="handleExport">导出</el-button>
+      <el-button
+        type="warning"
+        :loading="exporting"
+        @click="handleExport"
+      >
+        {{ exporting ? '导出中...' : '导出' }}
+      </el-button>
       <el-button @click="handleReset">重置</el-button>
     </div>
 
@@ -279,6 +285,7 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Document, Delete } from '@element-plus/icons-vue'
+import axios from 'axios'
 
 const formRef = ref()
 const previewVisible = ref(false)
@@ -286,6 +293,7 @@ const showReferences = ref(false)
 const uploadProgress = ref(0)
 const uploadStatus = ref('')
 const selectedTemplate = ref('default')
+const exporting = ref(false)
 
 const form = ref({
   courseName: '',
@@ -430,9 +438,29 @@ const handlePreview = () => {
   previewVisible.value = true
 }
 
-const handleExport = () => {
-  // TODO: 实现导出功能
-  ElMessage.success('导出成功')
+const handleExport = async () => {
+  exporting.value = true
+  try {
+    const response = await axios.get('/api/export/syllabus', {
+      responseType: 'blob'
+    })
+    // 创建下载链接
+    const blob = new Blob([response.data], { type: response.headers['content-type'] })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    // 文件名可从响应头获取，这里写死
+    link.download = '机器学习课程大纲.docx'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (e) {
+    ElMessage.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 const handleReset = () => {

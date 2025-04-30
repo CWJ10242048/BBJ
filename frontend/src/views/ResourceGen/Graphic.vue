@@ -1,10 +1,10 @@
 <template>
   <div class="graphicgen-container">
-    <h2>图文生成</h2>
+    <h2>图片生成</h2>
     <el-card class="box-card">
       <template #header>
         <div class="card-header">
-          <span>图文生成信息</span>
+          <span>图片生成信息</span>
         </div>
       </template>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
@@ -74,13 +74,15 @@
     <div class="button-group">
       <el-button type="primary" @click="handleSave">保存</el-button>
       <el-button type="success" @click="handlePreview">预览</el-button>
-      <el-button type="warning" @click="handleExport">导出</el-button>
+      <el-button type="warning" :loading="exporting" @click="handleExport">
+        {{ exporting ? '导出中...' : '导出' }}
+      </el-button>
       <el-button @click="handleReset">重置</el-button>
     </div>
 
-    <el-dialog v-model="previewVisible" title="图文生成预览" width="60%" destroy-on-close>
+    <el-dialog v-model="previewVisible" title="图片生成预览" width="60%" destroy-on-close>
       <div class="preview-content">
-        <h2>图文生成方案</h2>
+        <h2>图片生成方案</h2>
         <el-descriptions :column="1" border>
           <el-descriptions-item label="图片类型">{{ form.type }}</el-descriptions-item>
           <el-descriptions-item label="图片大小">{{ sizeText }}</el-descriptions-item>
@@ -101,9 +103,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import axios from 'axios'
 
 const formRef = ref()
 const previewVisible = ref(false)
+const exporting = ref(false)
 const form = ref({
   type: '',
   size: '',
@@ -151,8 +155,28 @@ const handleSave = async () => {
 const handlePreview = () => {
   previewVisible.value = true
 }
-const handleExport = () => {
-  ElMessage.success('导出成功')
+const handleExport = async () => {
+  exporting.value = true
+  try {
+    await new Promise(resolve => setTimeout(resolve, 2000)) // 2秒延迟
+    const response = await axios.get('/api/export/graphic', {
+      responseType: 'blob'
+    })
+    const blob = new Blob([response.data], { type: response.headers['content-type'] })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = '二叉树.jpg'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (e) {
+    ElMessage.error('导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 const handleReset = () => {
   if (!formRef.value) return

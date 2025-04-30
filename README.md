@@ -42,4 +42,6 @@
 - 测试：Vitest + Playwright 
 
 ## 启动项目
+首先要启动后端，我用的JDK版本是11。用maven然后运行项目即可，然后再启动前端。
+
 cd 进入frontend，然后npm run dev

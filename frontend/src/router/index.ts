@@ -15,7 +15,7 @@ const router = createRouter({
     },
     {
       path: '/',
-      redirect: '/login'
+      redirect: '/home'
     },
     {
       path: '/',
@@ -27,7 +27,7 @@ const router = createRouter({
           component: () => import('@/views/Home.vue'),
           meta: {
             title: '首页',
-            requiresAuth: true
+            requiresAuth: false
           }
         },
         {

@@ -68,7 +68,7 @@
       <template #header>
         <div class="card-header">
           <span>教案基本信息</span>
-          <el-tag v-if="isBasicInfoAIGenerated" type="success" effect="dark">AI自动生成</el-tag>
+          <span v-if="isBasicInfoAIGenerated" class="ai-generated-tag">AI自动生成</span>
         </div>
       </template>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
@@ -342,14 +342,14 @@
     <!-- 教学内容 -->
     <el-card class="box-card">
       <template #header>
-        <div class="card-header">
-          <span>教学内容</span>
-          <div class="header-right">
-            <el-tag v-if="isContentAIGenerated" type="success" effect="dark" class="ai-tag">AI自动生成</el-tag>
-            <el-button type="primary" size="small" @click="handleAutoGenerateContent" :disabled="typing">
-              {{ typing ? '生成中...' : '重新生成' }}
-            </el-button>
+        <div class="content-header">
+          <div class="left-section">
+            <span class="section-title">教学内容</span>
+            <span v-if="isContentAIGenerated" class="ai-generated-tag">AI自动生成</span>
           </div>
+          <el-button type="primary" size="small" @click="handleAutoGenerateContent" :disabled="typing">
+            {{ typing ? '生成中...' : '重新生成' }}
+          </el-button>
         </div>
       </template>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
@@ -398,6 +398,7 @@
         <div class="card-header">
           <span>教学反思与总结</span>
           <div class="header-right">
+            <span v-if="isReflectionAIGenerated" class="ai-generated-tag">AI自动生成</span>
             <el-button 
               type="primary" 
               size="small" 
@@ -2690,6 +2691,7 @@ const getStageColor = (type: string) => {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto;
 }
 
 .el-tag {
@@ -2967,5 +2969,74 @@ const getStageColor = (type: string) => {
   font-size: 12px;
   white-space: nowrap;
   margin-bottom: 4px;
+}
+
+/* AI自动生成标记样式 */
+.ai-generated-tag {
+  color: #67c23a;
+  font-size: 14px;
+  margin-left: 10px;
+  margin-right: 0;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.ai-generated-tag::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #67c23a;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+}
+
+.card-header .ai-generated-tag {
+  margin-right: auto;
+}
+
+.title-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.left-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title {
+  font-weight: bold;
+}
+
+.ai-generated-tag {
+  color: #67c23a;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.ai-generated-tag::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #67c23a;
+  border-radius: 50%;
+  margin-right: 6px;
 }
 </style> 

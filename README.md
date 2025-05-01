@@ -67,7 +67,17 @@
 - 构建工具：Maven
 
 ## 启动项目
-1. **启动后端**
+1. **启动数据库**
+   - 确保已安装 MySQL 8.0 或以上版本
+   - 启动 MySQL 服务
+   - 创建数据库：`CREATE DATABASE bbj;`
+   - 数据库配置信息：
+     - 用户名：root
+     - 密码：root
+     - 端口：3306
+     - 数据库名：bbj
+
+2. **启动后端**
   - 确保使用 JDK 11
   - 使用 Maven 构建并运行项目：`mvn spring-boot:run`
   - 或在 IDE 中直接运行 BbjApplication 类

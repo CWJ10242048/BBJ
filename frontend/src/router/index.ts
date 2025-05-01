@@ -56,7 +56,7 @@ const router = createRouter({
             },
             {
               path: 'interaction',
-              component: () => import('../views/TeachingDesign/Interaction.vue')
+              component: () => import('@/views/TeachingDesign/Interaction.vue')
             }
           ]
         },

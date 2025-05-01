@@ -2,18 +2,126 @@
   <div class="home-page">
     <!-- 主要内容区 - 使用栅格布局 -->
     <el-row :gutter="20" class="content-row">
-      <!-- 左侧区域 - 常用功能和最近备课 -->
+      <!-- 左侧区域 - 学情概要和通知公告 -->
       <el-col :span="16">
         <div class="left-column">
+          <!-- 概要看板（学情分析内容）模块 -->
+          <el-card class="module-card dashboard-card">
+            <template #header>
+              <div class="card-header">
+                <div class="header-icon">
+                  <el-icon><DataLine /></el-icon>
+                </div>
+                <div class="header-title">学情概要</div>
+                <div class="header-actions">
+                  <el-button size="small" type="primary" plain @click="navigateTo('/analysis/student-board')">详细分析</el-button>
+                </div>
+              </div>
+            </template>
+            <div class="dashboard-content">
+              <div class="dashboard-inner">
+                <!-- 学情进度 -->
+                <div class="progress-section">
+                  <div class="progress-title">
+                    <span>课程进度</span>
+                    <span class="progress-value">75%</span>
+                  </div>
+                  <el-progress :percentage="75" :stroke-width="10" :show-text="false" color="#4a8ccf"></el-progress>
+                </div>
+
+                <!-- 知识点掌握概况 -->
+                <div class="knowledge-section">
+                  <div class="section-title">知识点掌握概况</div>
+                  <div class="knowledge-chart">
+                    <div class="chart-legend">
+                      <div class="legend-item">
+                        <div class="legend-color" style="background-color: #67C23A;"></div>
+                        <div class="legend-text">已掌握</div>
+                        <div class="legend-value">68%</div>
+                      </div>
+                      <div class="legend-item">
+                        <div class="legend-color" style="background-color: #E6A23C;"></div>
+                        <div class="legend-text">待巩固</div>
+                        <div class="legend-value">22%</div>
+                      </div>
+                      <div class="legend-item">
+                        <div class="legend-color" style="background-color: #F56C6C;"></div>
+                        <div class="legend-text">未掌握</div>
+                        <div class="legend-value">10%</div>
+                      </div>
+                    </div>
+                    <div class="knowledge-bars">
+                      <div class="knowledge-bar">
+                        <div class="bar-segment mastered" style="width: 68%;"></div>
+                        <div class="bar-segment reviewing" style="width: 22%;"></div>
+                        <div class="bar-segment unmastered" style="width: 10%;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 班级状态 -->
+                <div class="class-status">
+                  <div class="section-title">班级学习状态</div>
+                  <div class="status-grid">
+                    <div class="status-item">
+                      <div class="status-value">36</div>
+                      <div class="status-label">总人数</div>
+                    </div>
+                    <div class="status-item">
+                      <div class="status-value">32</div>
+                      <div class="status-label">活跃人数</div>
+                    </div>
+                    <div class="status-item">
+                      <div class="status-value">87%</div>
+                      <div class="status-label">出勤率</div>
+                    </div>
+                    <div class="status-item">
+                      <div class="status-value">92%</div>
+                      <div class="status-label">作业提交率</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-card>
+
+          <!-- 通知公告模块 -->
+          <el-card class="module-card notice-card">
+            <template #header>
+              <div class="card-header">
+                <div class="header-icon">
+                  <el-icon><Bell /></el-icon>
+                </div>
+                <div class="header-title">通知公告</div>
+              </div>
+            </template>
+            <div class="notice-list">
+              <el-empty v-if="!notices.length" description="暂无通知公告"></el-empty>
+              <div v-for="(item, index) in notices" :key="index" class="notice-item">
+                <div class="notice-content">
+                  <div class="notice-title">{{ item.title }}</div>
+                  <div class="notice-time">{{ item.time }}</div>
+                </div>
+                <div class="notice-status" :class="{ 'unread': !item.read }"></div>
+              </div>
+            </div>
+          </el-card>
+        </div>
+      </el-col>
+
+      <!-- 右侧区域 - 常用功能和最近备课 -->
+      <el-col :span="8">
+        <div class="right-column">
           <!-- 常用功能模块 -->
           <el-card class="module-card function-card">
             <template #header>
               <div class="card-header">
                 <div class="header-icon">
                   <el-icon><StarFilled /></el-icon>
-      </div>
+                </div>
                 <div class="header-title">常用功能</div>
-    </div>
+              </div>
             </template>
             <div class="function-buttons-container">
               <el-button 
@@ -82,8 +190,8 @@
                 <div class="header-title">上次备课</div>
                 <div class="header-actions">
                   <el-button size="small" type="primary" plain @click="navigateTo('/history')">查看更多</el-button>
-        </div>
-      </div>
+                </div>
+              </div>
             </template>
             <div class="history-list">
               <el-empty v-if="!historyRecords.length" description="暂无备课历史记录"></el-empty>
@@ -99,118 +207,7 @@
                 <div class="history-actions">
                   <el-button type="primary" size="small" @click="viewHistoryDetail(item)">查看</el-button>
                 </div>
-        </div>
-      </div>
-          </el-card>
-        </div>
-      </el-col>
-
-      <!-- 右侧区域 - 学情分析和通知公告 -->
-      <el-col :span="8">
-        <div class="right-column">
-          <!-- 概要看板（学情分析内容）模块 -->
-          <el-card class="module-card dashboard-card">
-            <template #header>
-              <div class="card-header">
-                <div class="header-icon">
-                  <el-icon><DataLine /></el-icon>
-                </div>
-                <div class="header-title">学情概要</div>
-                <div class="header-actions">
-                  <el-button size="small" type="primary" plain @click="navigateTo('/analysis/student-board')">详细分析</el-button>
-                </div>
               </div>
-            </template>
-            <div class="dashboard-content">
-              <div class="dashboard-inner">
-                <!-- 学情进度 -->
-                <div class="progress-section">
-                  <div class="progress-title">
-                    <span>课程进度</span>
-                    <span class="progress-value">75%</span>
-                  </div>
-                  <el-progress :percentage="75" :stroke-width="10" :show-text="false" color="#4a8ccf"></el-progress>
-      </div>
-
-                <!-- 知识点掌握概况 -->
-                <div class="knowledge-section">
-                  <div class="section-title">知识点掌握概况</div>
-                  <div class="knowledge-chart">
-                    <div class="chart-legend">
-                      <div class="legend-item">
-                        <div class="legend-color" style="background-color: #67C23A;"></div>
-                        <div class="legend-text">已掌握</div>
-                        <div class="legend-value">68%</div>
-                      </div>
-                      <div class="legend-item">
-                        <div class="legend-color" style="background-color: #E6A23C;"></div>
-                        <div class="legend-text">待巩固</div>
-                        <div class="legend-value">22%</div>
-                      </div>
-                      <div class="legend-item">
-                        <div class="legend-color" style="background-color: #F56C6C;"></div>
-                        <div class="legend-text">未掌握</div>
-                        <div class="legend-value">10%</div>
-        </div>
-      </div>
-                    <div class="knowledge-bars">
-                      <div class="knowledge-bar">
-                        <div class="bar-segment mastered" style="width: 68%;"></div>
-                        <div class="bar-segment reviewing" style="width: 22%;"></div>
-                        <div class="bar-segment unmastered" style="width: 10%;"></div>
-                      </div>
-        </div>
-      </div>
-    </div>
-
-                <!-- 班级状态 -->
-                <div class="class-status">
-                  <div class="section-title">班级学习状态</div>
-                  <div class="status-grid">
-                    <div class="status-item">
-                      <div class="status-value">36</div>
-                      <div class="status-label">总人数</div>
-                    </div>
-                    <div class="status-item">
-                      <div class="status-value">32</div>
-                      <div class="status-label">活跃人数</div>
-                    </div>
-                    <div class="status-item">
-                      <div class="status-value">87%</div>
-                      <div class="status-label">出勤率</div>
-                    </div>
-                    <div class="status-item">
-                      <div class="status-value">92%</div>
-                      <div class="status-label">作业提交率</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </el-card>
-
-          <!-- 通知公告模块 -->
-          <el-card class="module-card notice-card">
-            <template #header>
-      <div class="card-header">
-        <div class="header-icon">
-                  <el-icon><Bell /></el-icon>
-                </div>
-                <div class="header-title">通知公告</div>
-              </div>
-            </template>
-            <div class="notice-list">
-              <div v-for="(notice, index) in notices" :key="index" class="notice-item">
-                <div class="notice-dot" :class="{ 'unread': !notice.read }"></div>
-                <div class="notice-content">
-                  <div class="notice-title">{{ notice.title }}</div>
-                  <div class="notice-time">{{ notice.time }}</div>
-                </div>
-              </div>
-              <div class="notice-more" v-if="notices.length">
-                <el-button link type="primary">查看全部</el-button>
-              </div>
-              <el-empty v-else description="暂无通知公告"></el-empty>
             </div>
           </el-card>
         </div>
@@ -466,6 +463,8 @@ const notices = ref([
   gap: 16px;
   height: 100%;
   width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
 .function-button {
@@ -477,21 +476,25 @@ const notices = ref([
   width: 100%;
   border-radius: 10px;
   transition: all 0.25s ease;
-  padding: 20px 15px;
+  padding: 12px 8px;
   margin: 0;
+  white-space: nowrap;
 }
 
 .function-button-icon {
-  font-size: 24px;
-  margin-right: 10px;
+  font-size: 20px;
+  margin-right: 8px;
   margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 .function-button span {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   margin-top: 0;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .function-button:hover {

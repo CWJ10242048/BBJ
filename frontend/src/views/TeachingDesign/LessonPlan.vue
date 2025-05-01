@@ -271,7 +271,7 @@
         </div>
       </template>
       <div class="stages-list">
-        <div v-for="(stage, idx) in stages" :key="stage.id" class="stage-card">
+        <div v-for="(stage, idx) in stages" :key="stage.id" class="stage-card" :style="{ background: getStageColor(stage.type) + '20' }">
           <div class="stage-header">
             <el-select v-model="stage.type" placeholder="选择环节" style="width: 140px" @change="handleStageTypeChange(stage, idx)">
               <el-option v-for="item in stageOptions" :key="item.value" :label="item.label" :value="item.value" />
@@ -284,7 +284,15 @@
           </div>
           <div class="stage-body">
             <div class="stage-time">
-              <el-input-number v-model="stage.time" :min="1" :max="180" :step="1" controls-position="right" style="width: 100px" />
+              <el-input-number 
+                v-model="stage.time" 
+                :min="1" 
+                :max="180" 
+                :step="1" 
+                controls-position="right" 
+                style="width: 100px"
+                @change="handleTimeChange"
+              />
               <span class="time-unit">分钟</span>
             </div>
             <el-input
@@ -339,7 +347,7 @@
           <div class="header-right">
             <el-tag v-if="isContentAIGenerated" type="success" effect="dark" class="ai-tag">AI自动生成</el-tag>
             <el-button type="primary" size="small" @click="handleAutoGenerateContent" :disabled="typing">
-              {{ typing ? '生成中...' : '自动生成' }}
+              {{ typing ? '生成中...' : '重新生成' }}
             </el-button>
           </div>
         </div>
@@ -513,7 +521,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, watch, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Document, Delete, Picture, VideoPlay, Collection, Sort } from '@element-plus/icons-vue'
 import { nanoid } from 'nanoid'
 import axios from 'axios'
@@ -1172,74 +1180,6 @@ watch(selectedHistorySyllabus, (newVal) => {
         ]
       }
 
-      // 自动生成AI推荐资源
-      if (selectedSyllabus.content.courseName === '机器学习') {
-        aiResources.value = [
-          {
-            id: '1',
-            name: '线性回归基础概念PPT',
-            type: 'ppt',
-            description: '包含线性回归的基本概念、数学原理和实际应用案例',
-            tags: ['基础概念', '数学原理', '案例分析'],
-            url: 'https://example.com/ppt1'
-          },
-          {
-            id: '2',
-            name: '梯度下降算法详解',
-            type: 'doc',
-            description: '详细讲解梯度下降算法的原理、实现方法和优化技巧',
-            tags: ['算法', '优化', '实现'],
-            url: 'https://example.com/doc1'
-          },
-          {
-            id: '3',
-            name: '线性回归实战案例',
-            type: 'video',
-            description: '通过实际案例演示线性回归模型的训练和评估过程',
-            tags: ['实战', '案例', '演示'],
-            url: 'https://example.com/video1'
-          }
-        ]
-      } else if (selectedSyllabus.content.courseName === '数据结构') {
-        aiResources.value = [
-          {
-            id: '1',
-            name: '线性表实现原理PPT',
-            type: 'ppt',
-            description: '详细讲解顺序表和链表的实现原理',
-            tags: ['数据结构', '实现原理', '代码示例'],
-            url: 'https://example.com/ppt2'
-          },
-          {
-            id: '2',
-            name: '链表操作实践',
-            type: 'doc',
-            description: '链表基本操作的实现代码和详细注释',
-            tags: ['代码实现', '操作示例'],
-            url: 'https://example.com/doc2'
-          }
-        ]
-      } else if (selectedSyllabus.content.courseName === '操作系统') {
-        aiResources.value = [
-          {
-            id: '1',
-            name: '进程调度算法PPT',
-            type: 'ppt',
-            description: '各种进程调度算法的原理和比较',
-            tags: ['调度算法', '性能分析'],
-            url: 'https://example.com/ppt3'
-          },
-          {
-            id: '2',
-            name: '进程调度模拟器',
-            type: 'video',
-            description: '演示不同调度算法的实际运行效果',
-            tags: ['算法演示', '性能对比'],
-            url: 'https://example.com/video2'
-          }
-        ]
-      }
-      
       // 设置AI生成标记
       isBasicInfoAIGenerated.value = true
       isContentAIGenerated.value = true
@@ -1651,10 +1591,46 @@ const handleReset = () => {
 }
 
 const handleTimeChange = () => {
-  if (isTimeMismatch.value) {
-    ElMessage.warning('总时间与课时不匹配，请调整各环节时间')
+  const totalMinutes = stages.value.reduce((sum, stage) => sum + stage.time, 0)
+  const expectedMinutes = form.value.duration * 45
+  
+  if (totalMinutes !== expectedMinutes) {
+    ElMessageBox.confirm(
+      `当前总时间(${totalMinutes}分钟)与课时时间(${expectedMinutes}分钟)不匹配，是否自动调整各环节时间？`,
+      '时间调整',
+      {
+        confirmButtonText: '自动调整',
+        cancelButtonText: '手动调整',
+        type: 'warning'
+      }
+    ).then(() => {
+      autoAllocateTime()
+      ElMessage.success('已自动调整时间分配')
+    }).catch(() => {
+      ElMessage.info('您可以手动调整各环节时间')
+    })
   }
 }
+
+// 添加课时变化的监听
+watch(() => form.value.duration, (newDuration, oldDuration) => {
+  if (newDuration > 0 && oldDuration > 0) {
+    ElMessageBox.confirm(
+      '课时已更改，是否自动调整各环节时间？',
+      '时间调整',
+      {
+        confirmButtonText: '自动调整',
+        cancelButtonText: '手动调整',
+        type: 'warning'
+      }
+    ).then(() => {
+      autoAllocateTime()
+      ElMessage.success('已自动调整时间分配')
+    }).catch(() => {
+      ElMessage.info('您可以手动调整各环节时间')
+    })
+  }
+})
 
 const handleAutoAllocate = () => {
   const totalMinutes = form.value.duration * 45
@@ -1763,17 +1739,17 @@ const defaultStageDesc = (type: string) => {
 }
 
 const colorMap: Record<string, string> = {
-  review: '#6EC6FF',
-  import: '#6EC6FF',
-  lecture: '#42C39D',
-  case: '#7B6CF6',
-  group: '#FFB347',
-  discussion: '#FFD166',
-  interaction: '#FFD166',
-  practice: '#FF8C42',
-  quiz: '#F67280',
-  summary: '#A385E0',
-  custom: '#BDBDBD'
+  review: '#409EFF', // 复习旧知 - 蓝色
+  import: '#9C27B0', // 导入 - 紫色
+  lecture: '#67C23A', // 讲授 - 绿色
+  case: '#E6A23C', // 案例分析 - 橙色
+  group: '#F56C6C', // 小组合作学习 - 红色
+  discussion: '#795548', // 课堂讨论 - 棕色
+  interaction: '#00BCD4', // 互动 - 青色
+  practice: '#FF9800', // 练习 - 橙黄色
+  quiz: '#8BC34A', // 课堂小测验 - 浅绿色
+  summary: '#607D8B', // 总结 - 蓝灰色
+  custom: '#BDBDBD' // 自定义 - 灰色
 }
 
 const stages = ref([
@@ -1800,31 +1776,16 @@ const addStage = () => {
   }
   if (!name) return
   
-  // 计算新环节的时间
-  const totalMinutes = form.value.duration * 45
-  const currentTotal = stages.value.reduce((sum, stage) => sum + stage.time, 0)
-  const remainingTime = totalMinutes - currentTotal
-  const newTime = Math.min(remainingTime, 10) // 默认10分钟，但不超过剩余时间
-  
   stages.value.push({
     id: nanoid(),
     type: addStageType.value,
     name,
-    time: newTime,
+    time: 0, // 初始时间设为0，后面自动分配
     desc
   })
   
-  // 如果添加新环节后总时间超过限制，调整其他环节的时间
-  if (currentTotal + newTime > totalMinutes) {
-    const excess = (currentTotal + newTime) - totalMinutes
-    const otherStages = stages.value.filter(s => s.id !== stages.value[stages.value.length - 1].id)
-    const totalOtherTime = otherStages.reduce((sum, s) => sum + s.time, 0)
-    
-    otherStages.forEach(stage => {
-      const ratio = stage.time / totalOtherTime
-      stage.time = Math.max(5, Math.round(stage.time - (excess * ratio)))
-    })
-  }
+  // 添加后自动重新分配时间
+  autoAllocateTime()
   
   showAddDialog.value = false
   addStageType.value = ''
@@ -1838,18 +1799,9 @@ const removeStage = (idx: number) => {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    const removedTime = stages.value[idx].time
-  stages.value.splice(idx, 1)
-    
-    // 将删除环节的时间分配给其他环节
-    if (stages.value.length > 0) {
-      const totalRemainingTime = stages.value.reduce((sum, s) => sum + s.time, 0)
-      stages.value.forEach(stage => {
-        const ratio = stage.time / totalRemainingTime
-        stage.time = Math.round(stage.time + (removedTime * ratio))
-      })
-    }
-    
+    stages.value.splice(idx, 1)
+    // 删除后自动重新分配时间
+    autoAllocateTime()
     ElMessage.success('已删除该环节')
   }).catch(() => {})
 }
@@ -2013,6 +1965,20 @@ const handleDrop = (event: DragEvent, index: number) => {
   stagesCopy.splice(index, 0, draggedStage)
   stages.value = stagesCopy
   
+  // 询问是否要重新分配时间
+  ElMessageBox.confirm(
+    '是否要重新自动分配各环节时间？',
+    '时间调整',
+    {
+      confirmButtonText: '自动分配',
+      cancelButtonText: '保持不变',
+      type: 'info'
+    }
+  ).then(() => {
+    autoAllocateTime()
+    ElMessage.success('已自动调整时间分配')
+  }).catch(() => {})
+  
   // 重置拖拽状态
   draggedIndex.value = -1
   draggedOverIndex.value = -1
@@ -2030,23 +1996,6 @@ watch(stages, (newStages) => {
     form.value.duration = Math.ceil(totalMinutes / 45)
   }
 }, { deep: true })
-
-// 监听课时变化，调整教学环节时间
-watch(() => form.value.duration, (newDuration) => {
-  if (newDuration > 0) {  // 添加判断，确保newDuration大于0
-    const totalMinutes = newDuration * 45
-    const currentTotal = stages.value.reduce((sum, stage) => sum + (stage.time || 0), 0)
-    
-    if (currentTotal > 0) {  // 添加判断，确保currentTotal大于0
-      // 按比例调整各环节时间
-      const ratio = totalMinutes / currentTotal
-      stages.value = stages.value.map(stage => ({
-        ...stage,
-        time: Math.round((stage.time || 0) * ratio)
-      }))
-    }
-  }
-})
 
 const isResizing = ref(false)
 const resizeDirection = ref('')
@@ -2289,31 +2238,6 @@ const handleSortResources = () => {
   ElMessage.info('资源排序功能开发中')
 }
 
-// 监听教学环节时间变化，更新总时间
-watch(stages, (newStages) => {
-  const totalMinutes = newStages.reduce((sum, stage) => sum + (stage.time || 0), 0)
-  if (totalMinutes > 0) {  // 添加判断，确保totalMinutes大于0
-    form.value.duration = Math.ceil(totalMinutes / 45)
-  }
-}, { deep: true })
-
-// 监听课时变化，调整教学环节时间
-watch(() => form.value.duration, (newDuration) => {
-  if (newDuration > 0) {  // 添加判断，确保newDuration大于0
-    const totalMinutes = newDuration * 45
-    const currentTotal = stages.value.reduce((sum, stage) => sum + (stage.time || 0), 0)
-    
-    if (currentTotal > 0) {  // 添加判断，确保currentTotal大于0
-      // 按比例调整各环节时间
-      const ratio = totalMinutes / currentTotal
-      stages.value = stages.value.map(stage => ({
-        ...stage,
-        time: Math.round((stage.time || 0) * ratio)
-      }))
-    }
-  }
-})
-
 // 初始化时设置时间比例
 onMounted(() => {
   // 确保初始课时大于0
@@ -2338,6 +2262,156 @@ const handleResourceChange = (file: any) => {
     })
     ElMessage.success(`已添加资源：${file.name}`)
   }
+}
+
+const handleSyllabusSelect = (selectedSyllabus: any) => {
+  if (selectedSyllabus) {
+    // 填充基本信息
+    form.value.courseName = selectedSyllabus.content.courseName
+    form.value.topic = selectedSyllabus.content.topic
+    form.value.objectives = selectedSyllabus.content.objectives
+    form.value.keyPoints = selectedSyllabus.content.keyPoints
+    form.value.difficultPoints = selectedSyllabus.content.difficultPoints
+    
+    // 根据课程类型提供默认的教学环节建议
+    let suggestedStages = []
+    if (selectedSyllabus.content.courseName === '机器学习') {
+      suggestedStages = [
+        { id: nanoid(), type: 'review', name: '复习旧知', time: 10, desc: '回顾上节课的线性回归基本概念和数学原理' },
+        { id: nanoid(), type: 'import', name: '导入', time: 10, desc: '通过实际案例引入线性回归的应用场景' },
+        { id: nanoid(), type: 'lecture', name: '讲授', time: 45, desc: '详细讲解最小二乘估计和梯度下降算法' },
+        { id: nanoid(), type: 'case', name: '案例分析', time: 20, desc: '分析实际数据集，演示模型训练过程' },
+        { id: nanoid(), type: 'practice', name: '练习', time: 20, desc: '学生动手实现简单的线性回归模型' },
+        { id: nanoid(), type: 'summary', name: '总结', time: 10, desc: '总结本节课重点，布置课后作业' }
+      ]
+    } else if (selectedSyllabus.content.courseName === '数据结构') {
+      suggestedStages = [
+        { id: nanoid(), type: 'review', name: '复习旧知', time: 10, desc: '回顾线性表的基本概念' },
+        { id: nanoid(), type: 'import', name: '导入', time: 10, desc: '引入顺序表和链表的概念' },
+        { id: nanoid(), type: 'lecture', name: '讲授', time: 45, desc: '讲解顺序表和链表的实现原理' },
+        { id: nanoid(), type: 'practice', name: '练习', time: 30, desc: '实现基本的链表操作' },
+        { id: nanoid(), type: 'summary', name: '总结', time: 10, desc: '总结两种存储结构的优缺点' }
+      ]
+    } else {
+      // 默认建议
+      suggestedStages = [
+        { id: nanoid(), type: 'review', name: '复习旧知', time: 10, desc: defaultStageDesc('review') },
+        { id: nanoid(), type: 'import', name: '导入', time: 10, desc: defaultStageDesc('import') },
+        { id: nanoid(), type: 'lecture', name: '讲授', time: 45, desc: defaultStageDesc('lecture') },
+        { id: nanoid(), type: 'practice', name: '练习', time: 20, desc: defaultStageDesc('practice') },
+        { id: nanoid(), type: 'summary', name: '总结', time: 10, desc: defaultStageDesc('summary') }
+      ]
+    }
+
+    // 显示建议对话框
+    ElMessageBox.confirm(
+      '系统已根据课程内容生成教学环节建议，是否采用？',
+      '教学环节建议',
+      {
+        confirmButtonText: '采用建议',
+        cancelButtonText: '自定义设置',
+        type: 'info'
+      }
+    ).then(() => {
+      // 用户选择采用建议
+      stages.value = suggestedStages
+      ElMessage.success('已采用建议的教学环节设置')
+    }).catch(() => {
+      // 用户选择自定义设置
+      stages.value = [
+        { id: nanoid(), type: 'custom', name: '自定义环节', time: 10, desc: '' }
+      ]
+      ElMessage.info('您可以自由设置教学环节')
+    })
+    
+    // 设置AI生成标记
+    isBasicInfoAIGenerated.value = true
+    isContentAIGenerated.value = true
+    
+    // 显示成功提示
+    ElMessage.success('已根据教学大纲自动填充基本信息')
+  }
+}
+
+// 修改自动分配时间函数
+const autoAllocateTime = () => {
+  const totalMinutes = form.value.duration * 45
+  if (stages.value.length === 0) return
+  
+  // 定义各类型环节的默认时间权重
+  const weightMap = {
+    'review': 1,    // 复习
+    'import': 1,    // 导入
+    'lecture': 4,   // 讲授
+    'case': 2,      // 案例分析
+    'practice': 2,  // 练习
+    'discussion': 2,// 讨论
+    'quiz': 1,      // 测验
+    'summary': 1,   // 总结
+    'custom': 1     // 自定义
+  }
+  
+  // 计算总权重
+  let totalWeight = stages.value.reduce((sum, stage) => {
+    return sum + (weightMap[stage.type] || 1)
+  }, 0)
+  
+  // 按权重分配时间
+  let remainingTime = totalMinutes
+  let lastStageIndex = stages.value.length - 1
+  
+  stages.value.forEach((stage, index) => {
+    if (index === lastStageIndex) {
+      // 最后一个环节分配剩余的所有时间，避免舍入误差
+      stage.time = remainingTime
+    } else {
+      const weight = weightMap[stage.type] || 1
+      const allocatedTime = Math.round((weight / totalWeight) * totalMinutes)
+      stage.time = Math.max(5, allocatedTime) // 确保每个环节至少5分钟
+      remainingTime -= stage.time
+    }
+  })
+  
+  // 如果最后一个环节时间太短，从其他环节借时间
+  if (stages.value[lastStageIndex].time < 5) {
+    let timeNeeded = 5 - stages.value[lastStageIndex].time
+    for (let i = 0; i < lastStageIndex && timeNeeded > 0; i++) {
+      if (stages.value[i].time > 5) {
+        let canReduce = Math.min(timeNeeded, stages.value[i].time - 5)
+        stages.value[i].time -= canReduce
+        stages.value[lastStageIndex].time += canReduce
+        timeNeeded -= canReduce
+      }
+    }
+  }
+  
+  // 更新时间百分比
+  updateTimePercentages()
+}
+
+// 添加更新时间百分比的函数
+const updateTimePercentages = () => {
+  const totalMinutes = form.value.duration * 45
+  stages.value.forEach(stage => {
+    stage.percent = (stage.time / totalMinutes) * 100
+  })
+}
+
+const getStageColor = (type: string) => {
+  const colorMap: Record<string, string> = {
+    review: '#409EFF', // 复习旧知 - 蓝色
+    import: '#9C27B0', // 导入 - 紫色
+    lecture: '#67C23A', // 讲授 - 绿色
+    case: '#E6A23C', // 案例分析 - 橙色
+    group: '#F56C6C', // 小组合作学习 - 红色
+    discussion: '#795548', // 课堂讨论 - 棕色
+    interaction: '#00BCD4', // 互动 - 青色
+    practice: '#FF9800', // 练习 - 橙黄色
+    quiz: '#8BC34A', // 课堂小测验 - 浅绿色
+    summary: '#607D8B', // 总结 - 蓝灰色
+    custom: '#BDBDBD' // 自定义 - 灰色
+  }
+  return colorMap[type] || '#BDBDBD'
 }
 
 </script>
@@ -2582,7 +2656,6 @@ const handleResourceChange = (file: any) => {
   flex-wrap: wrap;
 }
 .stage-card {
-  background: #f7f8fa;
   border-radius: 8px;
   box-shadow: 0 1px 4px #0001;
   padding: 16px 18px 12px 18px;
@@ -2853,5 +2926,46 @@ const handleResourceChange = (file: any) => {
 
 .empty-analysis {
   padding: 40px 0;
+}
+
+.time-info {
+  margin-top: 8px;
+  color: #606266;
+  font-size: 14px;
+}
+
+.time-bar {
+  height: 8px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+.time-segment {
+  height: 100%;
+  float: left;
+  transition: all 0.3s;
+  position: relative;
+  cursor: pointer;
+}
+
+.time-segment:hover {
+  filter: brightness(0.9);
+}
+
+.time-segment:hover::after {
+  content: attr(data-time);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  margin-bottom: 4px;
 }
 </style> 

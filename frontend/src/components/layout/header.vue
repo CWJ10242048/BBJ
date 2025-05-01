@@ -116,7 +116,7 @@ const currentMenuInfo = computed(() => {
   const childPathMap = {
     // 教学设计子路径
     '/teaching-design/syllabus': '教学大纲设计',
-    '/teaching-design/plan': '教案生成',
+    '/teaching-design/LessonPlan': '教案生成',
     '/teaching-design/interaction': '互动环节设计',
     
     // 教学资源生成子路径

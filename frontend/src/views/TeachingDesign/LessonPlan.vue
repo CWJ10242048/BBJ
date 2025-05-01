@@ -16,19 +16,19 @@
         </el-radio-group>
 
         <div v-if="syllabusSource === 'upload'" class="upload-section">
-          <el-upload
-            class="upload-demo"
-            :auto-upload="false"
-            :show-file-list="false"
-            @change="handleFileChange"
-            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            :before-upload="beforeUpload"
-          >
-            <el-button type="primary">上传教学大纲</el-button>
-            <template #tip>
-              <div class="el-upload__tip">支持PDF、Word文档格式</div>
-            </template>
-          </el-upload>
+        <el-upload
+          class="upload-demo"
+          :auto-upload="false"
+          :show-file-list="false"
+          @change="handleFileChange"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          :before-upload="beforeUpload"
+        >
+          <el-button type="primary">上传教学大纲</el-button>
+          <template #tip>
+            <div class="el-upload__tip">支持PDF、Word文档格式</div>
+          </template>
+        </el-upload>
         </div>
 
         <div v-else class="history-section">
@@ -100,9 +100,9 @@
         </el-form-item>
         <el-form-item label="授课时间" prop="date">
           <div class="time-range-picker">
-            <el-date-picker
+          <el-date-picker
               v-model="form.startTime"
-              type="datetime"
+            type="datetime"
               placeholder="开始时间"
               :disabled-date="disabledDate"
               :disabled-hours="disabledHours"
@@ -141,9 +141,16 @@
       <template #header>
         <div class="card-header">
           <span>教学资源</span>
+          <div class="header-right">
+            <el-radio-group v-model="resourceSource" size="small">
+              <el-radio-button label="upload">上传资源</el-radio-button>
+              <el-radio-button label="ai">AI推荐</el-radio-button>
+            </el-radio-group>
+          </div>
         </div>
       </template>
       <div class="upload-container">
+        <div v-if="resourceSource === 'upload'">
         <el-upload
           class="upload-demo"
           :auto-upload="false"
@@ -154,6 +161,7 @@
           :before-remove="beforeRemoveResource"
           :on-exceed="handleExceed"
           :limit="5"
+            :on-change="handleResourceChange"
           accept=".pdf,.doc,.docx,.ppt,.pptx,.mp4,.jpg,.jpeg,.png"
         >
           <el-button type="primary">上传教学资源</el-button>
@@ -161,6 +169,96 @@
             <div class="el-upload__tip">支持PDF、Word、PPT、视频、图片等格式，最多上传5个文件</div>
           </template>
         </el-upload>
+        </div>
+        <div v-else class="ai-resources">
+          <div class="resource-filters">
+            <el-select v-model="selectedResourceType" placeholder="选择资源类型" style="width: 200px">
+              <el-option label="全部" value="all" />
+              <el-option label="课件" value="ppt" />
+              <el-option label="文档" value="doc" />
+              <el-option label="视频" value="video" />
+              <el-option label="图片" value="image" />
+            </el-select>
+            <el-button type="primary" @click="handleGenerateResources" :loading="generating">
+              {{ generating ? '生成中...' : '生成推荐资源' }}
+            </el-button>
+          </div>
+          <div v-if="aiResources.length > 0" class="resource-list">
+            <el-card v-for="resource in filteredResources" :key="resource.id" class="resource-card">
+              <div class="resource-info">
+                <el-icon :size="24" :color="getResourceIconColor(resource.type)">
+                  <component :is="getResourceIcon(resource.type)" />
+                </el-icon>
+                <div class="resource-details">
+                  <h4>{{ resource.name }}</h4>
+                  <p>{{ resource.description }}</p>
+                  <div class="resource-tags">
+                    <el-tag size="small" v-for="tag in resource.tags" :key="tag">{{ tag }}</el-tag>
+                  </div>
+                </div>
+              </div>
+              <div class="resource-actions">
+                <el-button type="primary" link @click="handlePreviewAIResource(resource)">预览</el-button>
+                <el-button type="success" link @click="handleUseAIResource(resource)">使用</el-button>
+              </div>
+            </el-card>
+          </div>
+          <div v-else-if="!generating" class="empty-resources">
+            <el-empty description="点击生成按钮获取AI推荐资源" />
+          </div>
+        </div>
+
+        <!-- 已使用资源列表 -->
+        <div class="used-resources">
+          <div class="section-header">
+            <span class="section-title">已使用资源</span>
+            <el-button type="primary" link @click="handleSortResources">
+              <el-icon><Sort /></el-icon>
+              排序
+            </el-button>
+          </div>
+          <el-table
+            v-if="usedResources.length > 0"
+            :data="usedResources"
+            style="width: 100%"
+            row-key="id"
+            :row-class-name="tableRowClassName"
+            size="small"
+            :header-cell-style="{
+              background: '#f5f7fa',
+              color: '#606266',
+              fontWeight: 'normal',
+              fontSize: '14px'
+            }"
+          >
+            <el-table-column type="index" width="40" />
+            <el-table-column label="资源名称" min-width="180">
+              <template #default="{ row }">
+                <div class="resource-name-cell">
+                  <el-icon :size="16" :color="getResourceIconColor(row.type)">
+                    <component :is="getResourceIcon(row.type)" />
+                  </el-icon>
+                  <span>{{ row.name }}</span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="type" label="类型" width="80">
+              <template #default="{ row }">
+                <el-tag size="small" :type="getResourceTagType(row.type)">
+                  {{ getResourceTypeLabel(row.type) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="description" label="描述" min-width="180" show-overflow-tooltip />
+            <el-table-column label="操作" width="120" fixed="right">
+              <template #default="{ row }">
+                <el-button type="primary" link size="small" @click="handlePreviewResource(row)">预览</el-button>
+                <el-button type="danger" link size="small" @click="handleRemoveUsedResource(row)">移除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-empty v-else description="暂无已使用资源" :image-size="60" />
+        </div>
       </div>
     </el-card>
 
@@ -180,7 +278,9 @@
               <el-option label="自定义" value="custom" />
             </el-select>
             <el-input v-if="stage.type==='custom'" v-model="stage.name" placeholder="输入环节名称" style="width: 120px; margin-left: 8px" />
-            <el-button type="danger" link icon="el-icon-delete" @click="removeStage(idx)" style="margin-left: 8px" />
+            <el-button type="danger" link @click="removeStage(idx)" style="margin-left: 8px">
+              <el-icon><Delete /></el-icon>
+            </el-button>
           </div>
           <div class="stage-body">
             <div class="stage-time">
@@ -216,8 +316,7 @@
         </div>
       </div>
       <div class="total-time-info">
-        总时间 <span class="total-time">{{ totalTime }}分钟</span>
-        <span v-if="isTimeMismatch" class="time-warning">(与课时不匹配)</span>
+        总时间 <span class="total-time">{{ form.duration * 45 }}分钟</span>
       </div>
       <el-dialog v-model="showAddDialog" title="增加环节" width="320px" :close-on-click-modal="false">
         <el-select v-model="addStageType" placeholder="选择环节类型" style="width: 100%">
@@ -238,8 +337,10 @@
         <div class="card-header">
           <span>教学内容</span>
           <div class="header-right">
-            <el-tag v-if="isContentAIGenerated" type="success" effect="dark">AI自动生成</el-tag>
-            <el-button type="primary" size="small" @click="handleAutoGenerateContent" :disabled="typing">自动生成</el-button>
+            <el-tag v-if="isContentAIGenerated" type="success" effect="dark" class="ai-tag">AI自动生成</el-tag>
+            <el-button type="primary" size="small" @click="handleAutoGenerateContent" :disabled="typing">
+              {{ typing ? '生成中...' : '自动生成' }}
+            </el-button>
           </div>
         </div>
       </template>
@@ -283,13 +384,66 @@
       </el-form>
     </el-card>
 
+    <!-- 教学反思与总结 -->
     <el-card class="box-card">
       <template #header>
         <div class="card-header">
           <span>教学反思与总结</span>
+          <div class="header-right">
+            <el-button 
+              type="primary" 
+              size="small" 
+              @click="handleAnalyzeReflection" 
+              :disabled="!canGenerateAnalysis || analyzing"
+            >
+              {{ analyzing ? '分析中...' : 'AI分析' }}
+            </el-button>
+          </div>
         </div>
       </template>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
+        <div v-if="isReflectionAIGenerated" class="analysis-section">
+          <div class="analysis-header">
+            <h3>AI分析报告</h3>
+            <div class="total-score">
+              教案总分：<span class="score">{{ totalScore }}</span>
+            </div>
+          </div>
+          <div class="analysis-content">
+            <div v-for="(item, index) in analysisItems" :key="index" class="analysis-item">
+              <div class="analysis-item-header">
+                <span class="item-name">{{ item.name }}</span>
+                <el-rate
+                  v-model="item.score"
+                  disabled
+                  show-score
+                  text-color="#ff9900"
+                  score-template="{value}分"
+                />
+              </div>
+              <div class="analysis-details">
+                <div class="strengths" v-if="item.strengths.length">
+                  <h4>优点：</h4>
+                  <ul>
+                    <li v-for="(strength, idx) in item.strengths" :key="idx">{{ strength }}</li>
+                  </ul>
+                </div>
+                <div class="weaknesses" v-if="item.weaknesses.length">
+                  <h4>不足：</h4>
+                  <ul>
+                    <li v-for="(weakness, idx) in item.weaknesses" :key="idx">{{ weakness }}</li>
+                  </ul>
+                </div>
+                <div class="suggestions" v-if="item.suggestions.length">
+                  <h4>改进建议：</h4>
+                  <ul>
+                    <li v-for="(suggestion, idx) in item.suggestions" :key="idx">{{ suggestion }}</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <el-form-item label="教学效果" prop="teachingEffect">
           <el-rate v-model="form.teachingEffect" :texts="['很差', '较差', '一般', '较好', '很好']" show-text />
         </el-form-item>
@@ -331,8 +485,26 @@
       <div class="preview-content">
         <h2>{{ form.courseName }}教案</h2>
         <div v-for="(value, key) in previewData" :key="key">
-          <h3>{{ getLabel(key) }}</h3>
-          <p>{{ value }}</p>
+          <h3>{{ key }}</h3>
+          <div v-if="Array.isArray(value)" class="preview-list">
+            <div v-for="(item, index) in value" :key="index" class="preview-item">
+              <template v-if="key === '教学环节'">
+                <div class="stage-info">
+                  <span class="stage-name">{{ item.name }}</span>
+                  <span class="stage-time">{{ item.time }}分钟</span>
+                </div>
+                <p class="stage-desc">{{ item.desc }}</p>
+              </template>
+              <template v-else-if="key === '教学资源'">
+                <div class="resource-info">
+                  <span class="resource-name">{{ item.name }}</span>
+                  <el-tag size="small" :type="getResourceTagType(item.type)">{{ item.type }}</el-tag>
+                </div>
+                <p class="resource-desc">{{ item.description }}</p>
+              </template>
+            </div>
+          </div>
+          <p v-else>{{ value }}</p>
         </div>
       </div>
     </el-dialog>
@@ -340,11 +512,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Document, Delete } from '@element-plus/icons-vue'
+import { Document, Delete, Picture, VideoPlay, Collection, Sort } from '@element-plus/icons-vue'
 import { nanoid } from 'nanoid'
 import axios from 'axios'
+import PizZip from 'pizzip'
+import Docxtemplater from 'docxtemplater'
+import { saveAs } from 'file-saver'
+import * as docx from 'docx'
 
 const formRef = ref()
 const previewVisible = ref(false)
@@ -401,35 +577,67 @@ const rules = {
 }
 
 const previewData = computed(() => {
-  // 只保留主要字段
   const {
     courseName, topic, teacher, class: className, startTime, endTime, lessonNumber, duration,
-    objectives, keyPoints, difficultPoints, procedure, syllabus
+    objectives, keyPoints, difficultPoints, procedure, syllabus, teachingEffect, studentFeedback, teachingReflection
   } = form.value
+
+  // 格式化时间
+  const formatTime = (date: Date) => {
+    if (!date) return ''
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  // 格式化教学效果
+  const formatTeachingEffect = (effect: number) => {
+    const texts = ['很差', '较差', '一般', '较好', '很好']
+    return texts[effect - 1] || '未评价'
+  }
+
+  // 格式化教学环节
+  const formatStages = () => {
+    return stages.value.map(stage => ({
+      name: stage.name,
+      time: stage.time,
+      desc: stage.desc
+    }))
+  }
+
+  // 格式化已使用资源
+  const formatResources = () => {
+    return usedResources.value.map(resource => ({
+      name: resource.name,
+      type: getResourceTypeLabel(resource.type),
+      description: resource.description
+    }))
+  }
+
   return {
-    courseName, topic, teacher, class: className, startTime, endTime, lessonNumber, duration,
-    objectives, keyPoints, difficultPoints, procedure, syllabus
+    '课程名称': courseName,
+    '课程主题': topic,
+    '授课教师': teacher,
+    '授课班级': className,
+    '授课时间': `${formatTime(startTime)} 至 ${formatTime(endTime)}`,
+    '课次': `第${lessonNumber}次课`,
+    '课时': `${duration}课时（${duration * 45}分钟）`,
+    '教学大纲': syllabus,
+    '教学目标': objectives,
+    '教学重点': keyPoints,
+    '教学难点': difficultPoints,
+    '教学过程': procedure,
+    '教学环节': formatStages(),
+    '教学资源': formatResources(),
+    '教学效果': formatTeachingEffect(teachingEffect),
+    '学生反馈': studentFeedback,
+    '教学反思': teachingReflection
   }
 })
-
-const getLabel = (key: string) => {
-  const labelMap: Record<string, string> = {
-    courseName: '课程名称',
-    topic: '课程主题',
-    teacher: '授课教师',
-    class: '授课班级',
-    startTime: '授课时间',
-    endTime: '授课时间',
-    lessonNumber: '课次',
-    duration: '课时',
-    objectives: '教学目标',
-    keyPoints: '教学重点',
-    difficultPoints: '教学难点',
-    procedure: '教学过程',
-    syllabus: '教学大纲'
-  }
-  return labelMap[key] || key
-}
 
 const syllabusSource = ref('upload')
 const selectedHistorySyllabus = ref('')
@@ -466,11 +674,308 @@ const historySyllabusList = ref([
       keyPoints: '进程控制块、进程调度、进程同步',
       difficultPoints: '死锁问题、进程通信机制'
     }
+  },
+  { 
+    id: '4', 
+    name: '机器学习教学大纲',
+    content: {
+      courseName: '机器学习',
+      topic: '线性回归',
+      objectives: '1. 理解线性回归的基本原理和数学推导\n2. 掌握最小二乘估计和梯度下降算法\n3. 能够使用Python实现线性回归模型\n4. 理解正则化在防止过拟合中的作用',
+      keyPoints: '线性回归模型、最小二乘估计、梯度下降、正则化',
+      difficultPoints: '梯度下降的收敛性分析、多重共线性问题、正则化参数的选择'
+    }
   }
 ])
 
 const isBasicInfoAIGenerated = ref(false)
 const isContentAIGenerated = ref(false)
+const isReflectionAIGenerated = ref(false)
+
+// 添加评估状态
+const analyzing = ref(false)
+const totalScore = ref(0)
+const analysisItems = ref([
+  {
+    name: '教学目标',
+    score: 0,
+    strengths: [],
+    weaknesses: [],
+    suggestions: []
+  },
+  {
+    name: '教学内容',
+    score: 0,
+    strengths: [],
+    weaknesses: [],
+    suggestions: []
+  },
+  {
+    name: '教学步骤',
+    score: 0,
+    strengths: [],
+    weaknesses: [],
+    suggestions: []
+  },
+  {
+    name: '教学资源',
+    score: 0,
+    strengths: [],
+    weaknesses: [],
+    suggestions: []
+  }
+])
+
+// 检查是否可以生成评估
+const canGenerateAnalysis = computed(() => {
+  return form.value.courseName && 
+         form.value.topic && 
+         form.value.objectives && 
+         form.value.keyPoints && 
+         form.value.difficultPoints && 
+         form.value.procedure
+})
+
+// 处理AI评估
+const handleAnalyzeReflection = async () => {
+  if (!canGenerateAnalysis.value) {
+    ElMessage.warning('请先填写基本信息和教学内容')
+    return
+  }
+
+  analyzing.value = true
+  try {
+    // 模拟API调用延迟
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // 根据课程类型生成不同的评估结果
+    if (form.value.courseName === '机器学习') {
+      totalScore.value = 4.3
+      analysisItems.value = [
+        {
+          name: '教学目标',
+          score: 4.5,
+          strengths: [
+            '目标设置明确，涵盖知识、技能和态度三个维度',
+            '目标层次分明，从理解到应用再到创新',
+            '目标与课程主题紧密相关'
+          ],
+          weaknesses: [
+            '部分目标表述可以更具体',
+            '缺少对实践环节的具体要求'
+          ],
+          suggestions: [
+            '增加对模型评估指标的具体要求',
+            '补充对代码实现的具体规范'
+          ]
+        },
+        {
+          name: '教学内容',
+          score: 4.0,
+          strengths: [
+            '重点难点把握准确',
+            '内容组织逻辑清晰',
+            '理论与实践结合紧密'
+          ],
+          weaknesses: [
+            '部分数学推导可以更详细',
+            '缺少对异常情况的处理说明'
+          ],
+          suggestions: [
+            '补充梯度下降收敛性证明',
+            '增加对数据异常处理的讲解'
+          ]
+        },
+        {
+          name: '教学步骤',
+          score: 4.2,
+          strengths: [
+            '时间分配合理',
+            '环节设计完整',
+            '注重学生实践'
+          ],
+          weaknesses: [
+            '案例分析时间可以适当延长',
+            '缺少对学习效果的即时反馈'
+          ],
+          suggestions: [
+            '增加课堂小测验环节',
+            '添加学生互评环节'
+          ]
+        },
+        {
+          name: '教学资源',
+          score: 4.3,
+          strengths: [
+            '资源类型丰富',
+            '内容与课程匹配度高',
+            '实践性强'
+          ],
+          weaknesses: [
+            '缺少在线练习平台',
+            '参考资料可以更丰富'
+          ],
+          suggestions: [
+            '添加在线编程练习平台',
+            '补充更多实际案例'
+          ]
+        }
+      ]
+    } else if (form.value.courseName === '数据结构') {
+      totalScore.value = 4.2
+      analysisItems.value = [
+        {
+          name: '教学目标',
+          score: 4.3,
+          strengths: [
+            '目标设置合理，符合课程要求',
+            '注重实践能力的培养',
+            '目标可衡量性强'
+          ],
+          weaknesses: [
+            '缺少对算法复杂度的要求',
+            '目标可以更具体'
+          ],
+          suggestions: [
+            '增加对时间复杂度分析的要求',
+            '补充对代码质量的具体标准'
+          ]
+        },
+        {
+          name: '教学内容',
+          score: 4.1,
+          strengths: [
+            '内容组织合理',
+            '重点难点突出',
+            '理论与实践结合'
+          ],
+          weaknesses: [
+            '缺少对边界情况的处理',
+            '部分内容可以更深入'
+          ],
+          suggestions: [
+            '补充异常处理的内容',
+            '增加对性能优化的讲解'
+          ]
+        },
+        {
+          name: '教学步骤',
+          score: 4.0,
+          strengths: [
+            '环节设计合理',
+            '时间分配得当',
+            '注重实践操作'
+          ],
+          weaknesses: [
+            '练习时间可以适当延长',
+            '缺少互动环节'
+          ],
+          suggestions: [
+            '增加小组讨论环节',
+            '添加代码评审环节'
+          ]
+        },
+        {
+          name: '教学资源',
+          score: 4.4,
+          strengths: [
+            '资源类型多样',
+            '内容实用性强',
+            '示例代码完整'
+          ],
+          weaknesses: [
+            '缺少可视化工具',
+            '参考资料可以更新'
+          ],
+          suggestions: [
+            '添加数据结构可视化工具',
+            '更新最新的参考资料'
+          ]
+        }
+      ]
+    } else {
+      // 默认评估结果
+      totalScore.value = 4.0
+      analysisItems.value = [
+        {
+          name: '教学目标',
+          score: 4.0,
+          strengths: [
+            '目标设置合理',
+            '符合课程要求',
+            '层次分明'
+          ],
+          weaknesses: [
+            '目标可以更具体',
+            '缺少量化指标'
+          ],
+          suggestions: [
+            '增加具体的学习目标',
+            '补充可衡量的标准'
+          ]
+        },
+        {
+          name: '教学内容',
+          score: 4.0,
+          strengths: [
+            '内容组织合理',
+            '重点突出',
+            '逻辑清晰'
+          ],
+          weaknesses: [
+            '部分内容可以更深入',
+            '缺少实践环节'
+          ],
+          suggestions: [
+            '增加实践内容',
+            '补充更多案例'
+          ]
+        },
+        {
+          name: '教学步骤',
+          score: 4.0,
+          strengths: [
+            '环节完整',
+            '时间分配合理',
+            '循序渐进'
+          ],
+          weaknesses: [
+            '互动环节可以增加',
+            '缺少反馈机制'
+          ],
+          suggestions: [
+            '增加互动环节',
+            '添加即时反馈'
+          ]
+        },
+        {
+          name: '教学资源',
+          score: 4.0,
+          strengths: [
+            '资源类型多样',
+            '内容实用',
+            '易于获取'
+          ],
+          weaknesses: [
+            '资源可以更丰富',
+            '缺少在线资源'
+          ],
+          suggestions: [
+            '补充在线学习资源',
+            '增加互动性资源'
+          ]
+        }
+      ]
+    }
+
+    isReflectionAIGenerated.value = true
+    ElMessage.success('评估完成')
+  } catch (error) {
+    ElMessage.error('评估失败，请重试')
+  } finally {
+    analyzing.value = false
+  }
+}
 
 // 监听历史大纲选择变化
 watch(selectedHistorySyllabus, (newVal) => {
@@ -484,6 +989,256 @@ watch(selectedHistorySyllabus, (newVal) => {
       form.value.keyPoints = selectedSyllabus.content.keyPoints
       form.value.difficultPoints = selectedSyllabus.content.difficultPoints
       form.value.syllabus = selectedSyllabus.name
+      
+      // 根据课程类型自动设置课次和课时
+      if (selectedSyllabus.content.courseName === '机器学习') {
+        form.value.lessonNumber = 4  // 第4次课
+        form.value.duration = 2      // 2课时
+        // 自动生成教学过程
+        form.value.procedure = `1. 【复习旧知】（10分钟）
+- 回顾上节课的线性回归基本概念
+- 复习最小二乘估计的基本原理
+- 检查学生对数学推导的理解程度
+
+2. 【导入】（10分钟）
+- 通过房价预测案例引入线性回归的应用场景
+- 展示实际数据集，激发学习兴趣
+- 引导学生思考如何建立预测模型
+
+3. 【讲授】（45分钟）
+- 详细讲解梯度下降算法的原理
+  * 损失函数的定义和几何意义
+  * 梯度下降的迭代过程
+  * 学习率的选择和收敛性分析
+- 介绍正则化方法
+  * 过拟合问题的产生原因
+  * 岭回归和Lasso的原理
+  * 正则化参数的选择方法
+
+4. 【案例分析】（20分钟）
+- 使用Python实现线性回归模型
+- 演示数据预处理和特征工程
+- 展示模型训练和评估过程
+- 分析不同参数对模型性能的影响
+
+5. 【练习】（20分钟）
+- 学生动手实现简单的线性回归模型
+- 完成数据可视化和结果分析
+- 教师巡视指导，解答疑问
+
+6. 【总结】（10分钟）
+- 总结本节课重点内容
+- 强调梯度下降和正则化的应用
+- 布置课后作业和预习任务`
+      } else if (selectedSyllabus.content.courseName === '数据结构') {
+        form.value.lessonNumber = 2  // 第2次课
+        form.value.duration = 2      // 2课时
+        // 自动生成教学过程
+        form.value.procedure = `1. 【复习旧知】（10分钟）
+- 回顾线性表的基本概念
+- 复习顺序存储结构的特点
+- 检查学生对基本操作的掌握情况
+
+2. 【导入】（10分钟）
+- 通过实际应用场景引入链表的概念
+- 分析顺序表的局限性
+- 引导学生思考新的存储结构需求
+
+3. 【讲授】（45分钟）
+- 详细讲解链表的实现原理
+  * 单链表的结构和特点
+  * 结点的定义和操作
+  * 基本操作的实现方法
+- 分析链表与顺序表的比较
+  * 存储结构的差异
+  * 操作效率的对比
+  * 适用场景的选择
+
+4. 【练习】（30分钟）
+- 实现链表的基本操作
+  * 创建和初始化链表
+  * 插入和删除结点
+  * 查找和遍历操作
+- 完成课后习题
+- 教师巡视指导，解答疑问
+
+5. 【总结】（10分钟）
+- 总结两种存储结构的特点
+- 强调链表操作的关键点
+- 布置课后作业和预习任务`
+      } else if (selectedSyllabus.content.courseName === '操作系统') {
+        form.value.lessonNumber = 3  // 第3次课
+        form.value.duration = 2      // 2课时
+        // 自动生成教学过程
+        form.value.procedure = `1. 【复习旧知】（10分钟）
+- 回顾进程的基本概念
+- 复习进程状态转换
+- 检查学生对进程控制块的理解
+
+2. 【导入】（10分钟）
+- 通过实际系统运行场景引入进程调度
+- 分析多进程并发执行的问题
+- 引导学生思考调度策略的重要性
+
+3. 【讲授】（45分钟）
+- 详细讲解进程调度算法
+  * 先来先服务（FCFS）
+  * 短作业优先（SJF）
+  * 时间片轮转（RR）
+  * 多级反馈队列（MLFQ）
+- 分析各种算法的特点
+  * 公平性和效率
+  * 响应时间和周转时间
+  * 适用场景的选择
+
+4. 【课堂讨论】（20分钟）
+- 讨论不同调度算法的适用场景
+- 分析算法优缺点
+- 探讨实际系统中的调度策略
+
+5. 【练习】（20分钟）
+- 模拟进程调度过程
+- 计算各种调度指标
+- 比较不同算法的性能
+
+6. 【总结】（10分钟）
+- 总结各种调度算法的特点
+- 强调调度策略的选择原则
+- 布置课后作业和预习任务`
+      } else {
+        form.value.lessonNumber = 1  // 默认第1次课
+        form.value.duration = 2      // 默认2课时
+        // 生成默认教学过程
+        form.value.procedure = `1. 【复习旧知】（10分钟）
+- 回顾上节课重点内容
+- 检查学生掌握情况
+- 解答学生疑问
+
+2. 【导入】（10分钟）
+- 引入本节课主题
+- 激发学习兴趣
+- 明确学习目标
+
+3. 【讲授】（45分钟）
+- 讲解核心知识点
+- 分析重点难点
+- 举例说明应用
+
+4. 【练习】（20分钟）
+- 课堂练习
+- 互动讨论
+- 教师指导
+
+5. 【总结】（10分钟）
+- 归纳重点内容
+- 布置课后作业
+- 预告下节课内容`
+      }
+      
+      // 根据课程类型自动设置教学环节
+      if (selectedSyllabus.content.courseName === '机器学习') {
+        stages.value = [
+          { id: nanoid(), type: 'review', name: '复习旧知', time: 10, desc: '回顾上节课的线性回归基本概念和数学原理' },
+          { id: nanoid(), type: 'import', name: '导入', time: 10, desc: '通过实际案例引入线性回归的应用场景' },
+          { id: nanoid(), type: 'lecture', name: '讲授', time: 45, desc: '详细讲解最小二乘估计和梯度下降算法' },
+          { id: nanoid(), type: 'case', name: '案例分析', time: 20, desc: '分析实际数据集，演示模型训练过程' },
+          { id: nanoid(), type: 'practice', name: '练习', time: 20, desc: '学生动手实现简单的线性回归模型' },
+          { id: nanoid(), type: 'summary', name: '总结', time: 10, desc: '总结本节课重点，布置课后作业' }
+        ]
+      } else if (selectedSyllabus.content.courseName === '数据结构') {
+        stages.value = [
+          { id: nanoid(), type: 'review', name: '复习旧知', time: 10, desc: '回顾线性表的基本概念' },
+          { id: nanoid(), type: 'import', name: '导入', time: 10, desc: '引入顺序表和链表的概念' },
+          { id: nanoid(), type: 'lecture', name: '讲授', time: 45, desc: '讲解顺序表和链表的实现原理' },
+          { id: nanoid(), type: 'practice', name: '练习', time: 30, desc: '实现基本的链表操作' },
+          { id: nanoid(), type: 'summary', name: '总结', time: 10, desc: '总结两种存储结构的优缺点' }
+        ]
+      } else if (selectedSyllabus.content.courseName === '操作系统') {
+        stages.value = [
+          { id: nanoid(), type: 'review', name: '复习旧知', time: 10, desc: '回顾进程的基本概念' },
+          { id: nanoid(), type: 'import', name: '导入', time: 10, desc: '引入进程调度的问题' },
+          { id: nanoid(), type: 'lecture', name: '讲授', time: 45, desc: '讲解进程调度算法' },
+          { id: nanoid(), type: 'discussion', name: '课堂讨论', time: 20, desc: '讨论不同调度算法的适用场景' },
+          { id: nanoid(), type: 'practice', name: '练习', time: 20, desc: '模拟进程调度过程' },
+          { id: nanoid(), type: 'summary', name: '总结', time: 10, desc: '总结各种调度算法的特点' }
+        ]
+      } else {
+        stages.value = [
+          { id: nanoid(), type: 'review', name: '复习旧知', time: 10, desc: defaultStageDesc('review') },
+          { id: nanoid(), type: 'import', name: '导入', time: 10, desc: defaultStageDesc('import') },
+          { id: nanoid(), type: 'lecture', name: '讲授', time: 45, desc: defaultStageDesc('lecture') },
+          { id: nanoid(), type: 'practice', name: '练习', time: 20, desc: defaultStageDesc('practice') },
+          { id: nanoid(), type: 'summary', name: '总结', time: 10, desc: defaultStageDesc('summary') }
+        ]
+      }
+
+      // 自动生成AI推荐资源
+      if (selectedSyllabus.content.courseName === '机器学习') {
+        aiResources.value = [
+          {
+            id: '1',
+            name: '线性回归基础概念PPT',
+            type: 'ppt',
+            description: '包含线性回归的基本概念、数学原理和实际应用案例',
+            tags: ['基础概念', '数学原理', '案例分析'],
+            url: 'https://example.com/ppt1'
+          },
+          {
+            id: '2',
+            name: '梯度下降算法详解',
+            type: 'doc',
+            description: '详细讲解梯度下降算法的原理、实现方法和优化技巧',
+            tags: ['算法', '优化', '实现'],
+            url: 'https://example.com/doc1'
+          },
+          {
+            id: '3',
+            name: '线性回归实战案例',
+            type: 'video',
+            description: '通过实际案例演示线性回归模型的训练和评估过程',
+            tags: ['实战', '案例', '演示'],
+            url: 'https://example.com/video1'
+          }
+        ]
+      } else if (selectedSyllabus.content.courseName === '数据结构') {
+        aiResources.value = [
+          {
+            id: '1',
+            name: '线性表实现原理PPT',
+            type: 'ppt',
+            description: '详细讲解顺序表和链表的实现原理',
+            tags: ['数据结构', '实现原理', '代码示例'],
+            url: 'https://example.com/ppt2'
+          },
+          {
+            id: '2',
+            name: '链表操作实践',
+            type: 'doc',
+            description: '链表基本操作的实现代码和详细注释',
+            tags: ['代码实现', '操作示例'],
+            url: 'https://example.com/doc2'
+          }
+        ]
+      } else if (selectedSyllabus.content.courseName === '操作系统') {
+        aiResources.value = [
+          {
+            id: '1',
+            name: '进程调度算法PPT',
+            type: 'ppt',
+            description: '各种进程调度算法的原理和比较',
+            tags: ['调度算法', '性能分析'],
+            url: 'https://example.com/ppt3'
+          },
+          {
+            id: '2',
+            name: '进程调度模拟器',
+            type: 'video',
+            description: '演示不同调度算法的实际运行效果',
+            tags: ['算法演示', '性能对比'],
+            url: 'https://example.com/video2'
+          }
+        ]
+      }
       
       // 设置AI生成标记
       isBasicInfoAIGenerated.value = true
@@ -507,10 +1262,39 @@ const handleFileChange = (file: any) => {
     } else {
       clearInterval(timer)
       uploadStatus.value = 'success'
-      ElMessage.success('上传成功')
       form.value.syllabus = file.name
+      
+      // 将上传的资源添加到已使用资源列表
+      const fileType = getFileType(file.name)
+      usedResources.value.push({
+        id: nanoid(),
+        name: file.name,
+        type: fileType,
+        description: `上传的${getResourceTypeLabel(fileType)}资源`,
+        tags: ['上传资源'],
+        url: URL.createObjectURL(file.raw)
+      })
+      
+      ElMessage.success('上传成功')
     }
   }, 100)
+}
+
+// 获取文件类型
+const getFileType = (fileName: string) => {
+  const extension = fileName.split('.').pop()?.toLowerCase()
+  const typeMap: Record<string, string> = {
+    'pdf': 'doc',
+    'doc': 'doc',
+    'docx': 'doc',
+    'ppt': 'ppt',
+    'pptx': 'ppt',
+    'mp4': 'video',
+    'jpg': 'image',
+    'jpeg': 'image',
+    'png': 'image'
+  }
+  return typeMap[extension || ''] || 'doc'
 }
 
 const removeFile = () => {
@@ -546,24 +1330,266 @@ const handlePreview = () => {
 }
 
 const handleExport = async () => {
+  // 检查必要字段是否填写
+  if (!form.value.courseName || !form.value.topic) {
+    ElMessage.warning('请先填写课程名称和主题')
+    return
+  }
+
   exporting.value = true
   try {
-    await new Promise(resolve => setTimeout(resolve, 2000)) // 2秒延迟
-    const response = await axios.get('/api/export/lessonplan', {
-      responseType: 'blob'
+    // 创建Word文档
+    const doc = new docx.Document({
+      sections: [{
+        properties: {},
+        children: [
+          // 标题
+          new docx.Paragraph({
+            text: `${form.value.courseName}教案`,
+            heading: docx.HeadingLevel.HEADING_1,
+            alignment: docx.AlignmentType.CENTER,
+            spacing: {
+              after: 400,
+            },
+          }),
+
+          // 基本信息
+          new docx.Paragraph({
+            text: '一、基本信息',
+            heading: docx.HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+          new docx.Paragraph({
+            children: [
+              new docx.TextRun({ text: '课程名称：', bold: true }),
+              new docx.TextRun({ text: form.value.courseName }),
+            ],
+          }),
+          new docx.Paragraph({
+            children: [
+              new docx.TextRun({ text: '课程主题：', bold: true }),
+              new docx.TextRun({ text: form.value.topic }),
+            ],
+          }),
+          new docx.Paragraph({
+            children: [
+              new docx.TextRun({ text: '授课教师：', bold: true }),
+              new docx.TextRun({ text: form.value.teacher }),
+            ],
+          }),
+          new docx.Paragraph({
+            children: [
+              new docx.TextRun({ text: '授课班级：', bold: true }),
+              new docx.TextRun({ text: form.value.class }),
+            ],
+          }),
+          new docx.Paragraph({
+            children: [
+              new docx.TextRun({ text: '授课日期：', bold: true }),
+              new docx.TextRun({ text: form.value.startTime ? form.value.startTime.toLocaleDateString('zh-CN') : '' }),
+            ],
+          }),
+          new docx.Paragraph({
+            children: [
+              new docx.TextRun({ text: '授课时间：', bold: true }),
+              new docx.TextRun({ text: form.value.startTime && form.value.endTime ? 
+                `${form.value.startTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })} - ${form.value.endTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}` : '' }),
+            ],
+          }),
+          new docx.Paragraph({
+            children: [
+              new docx.TextRun({ text: '课次：', bold: true }),
+              new docx.TextRun({ text: `第${form.value.lessonNumber}次课` }),
+            ],
+          }),
+          new docx.Paragraph({
+            children: [
+              new docx.TextRun({ text: '课时：', bold: true }),
+              new docx.TextRun({ text: `${form.value.duration}课时（${form.value.duration * 45}分钟）` }),
+            ],
+          }),
+
+          // 教学目标
+          new docx.Paragraph({
+            text: '二、教学目标',
+            heading: docx.HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+          ...(form.value.objectives ? form.value.objectives.split('\n')
+            .filter((line: string) => line.trim())
+            .map((obj: string) => new docx.Paragraph({
+              text: obj,
+              bullet: {
+                level: 0
+              }
+            })) : []),
+
+          // 教学重点
+          new docx.Paragraph({
+            text: '三、教学重点',
+            heading: docx.HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+          ...(form.value.keyPoints ? form.value.keyPoints.split('\n')
+            .filter((line: string) => line.trim())
+            .map((point: string) => new docx.Paragraph({
+              text: point,
+              bullet: {
+                level: 0
+              }
+            })) : []),
+
+          // 教学难点
+          new docx.Paragraph({
+            text: '四、教学难点',
+            heading: docx.HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+          ...(form.value.difficultPoints ? form.value.difficultPoints.split('\n')
+            .filter((line: string) => line.trim())
+            .map((point: string) => new docx.Paragraph({
+              text: point,
+              bullet: {
+                level: 0
+              }
+            })) : []),
+
+          // 教学环节
+          new docx.Paragraph({
+            text: '五、教学环节',
+            heading: docx.HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+          ...stages.value.map(stage => [
+            new docx.Paragraph({
+              children: [
+                new docx.TextRun({ text: `【${stage.name}】`, bold: true }),
+                new docx.TextRun({ text: `（${stage.time}分钟）` }),
+              ],
+              spacing: {
+                before: 200,
+              },
+            }),
+            new docx.Paragraph({
+              text: stage.desc || '暂无描述',
+              indent: {
+                left: 400,
+              },
+            }),
+          ]).flat(),
+
+          // 教学过程
+          new docx.Paragraph({
+            text: '六、教学过程',
+            heading: docx.HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+          ...(form.value.procedure ? form.value.procedure.split('\n')
+            .filter((line: string) => line.trim())
+            .map((proc: string) => new docx.Paragraph({
+              text: proc,
+              indent: {
+                left: proc.startsWith('-') ? 400 : (proc.startsWith('*') ? 800 : 0),
+              },
+            })) : []),
+
+          // 教学资源
+          new docx.Paragraph({
+            text: '七、教学资源',
+            heading: docx.HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+          ...usedResources.value.map(resource => [
+            new docx.Paragraph({
+              children: [
+                new docx.TextRun({ text: `• ${resource.name}`, bold: true }),
+                new docx.TextRun({ text: `（${getResourceTypeLabel(resource.type)}）` }),
+              ],
+            }),
+            new docx.Paragraph({
+              text: `说明：${resource.description || '暂无描述'}`,
+              indent: {
+                left: 400,
+              },
+            }),
+          ]).flat(),
+
+          // 教学反思与总结
+          new docx.Paragraph({
+            text: '八、教学反思与总结',
+            heading: docx.HeadingLevel.HEADING_2,
+            spacing: {
+              before: 400,
+              after: 200,
+            },
+          }),
+          new docx.Paragraph({
+            children: [
+              new docx.TextRun({ text: '教学效果：', bold: true }),
+              new docx.TextRun({ text: ['很差', '较差', '一般', '较好', '很好'][form.value.teachingEffect - 1] || '未评价' }),
+            ],
+          }),
+          new docx.Paragraph({
+            children: [
+              new docx.TextRun({ text: '学生反馈：', bold: true }),
+            ],
+          }),
+          new docx.Paragraph({
+            text: form.value.studentFeedback || '暂无反馈',
+            indent: {
+              left: 400,
+            },
+          }),
+          new docx.Paragraph({
+            children: [
+              new docx.TextRun({ text: '教学反思：', bold: true }),
+            ],
+          }),
+          new docx.Paragraph({
+            text: form.value.teachingReflection || '暂无反思',
+            indent: {
+              left: 400,
+            },
+          }),
+        ],
+      }],
     })
-    const blob = new Blob([response.data], { type: response.headers['content-type'] })
+
+    // 生成文档并下载
+    const blob = await docx.Packer.toBlob(doc)
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = '机器学习线性回归教案.docx'
+    link.download = `${form.value.courseName}教案.docx`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
     ElMessage.success('导出成功')
-  } catch (e) {
-    ElMessage.error('导出失败')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败，请重试')
   } finally {
     exporting.value = false
   }
@@ -607,9 +1633,21 @@ const handleReset = () => {
   uploadProgress.value = 0
   uploadStatus.value = ''
   selectedHistorySyllabus.value = ''
-  // 重置AI生成标记
+  // 重置时清除AI生成标记
   isBasicInfoAIGenerated.value = false
   isContentAIGenerated.value = false
+  isReflectionAIGenerated.value = false
+  totalScore.value = 0
+  analysisItems.value = analysisItems.value.map(item => ({
+    ...item,
+    score: 0,
+    strengths: [],
+    weaknesses: [],
+    suggestions: []
+  }))
+  // 清空资源列表
+  usedResources.value = []
+  aiResources.value = []
 }
 
 const handleTimeChange = () => {
@@ -622,48 +1660,64 @@ const handleAutoAllocate = () => {
   const totalMinutes = form.value.duration * 45
   const stageCount = stages.value.length
   
-  // 根据环节类型分配时间
-  stages.value = stages.value.map(stage => {
-    let time = 0
-    switch (stage.type) {
-      case 'lecture':
-        time = Math.floor(totalMinutes * 0.4)
-        break
-      case 'practice':
-      case 'interaction':
-        time = Math.floor(totalMinutes * 0.2)
-        break
-      case 'review':
-      case 'import':
-      case 'summary':
-        time = Math.floor(totalMinutes * 0.1)
-        break
-      default:
-        time = Math.floor(totalMinutes * 0.1)
-    }
-    return { ...stage, time }
-  })
-  
-  // 调整总时间
-  const currentTotal = stages.value.reduce((sum, stage) => sum + stage.time, 0)
-  if (currentTotal !== totalMinutes) {
-    const diff = totalMinutes - currentTotal
-    // 将剩余时间加到讲授环节
-    const lectureStage = stages.value.find(stage => stage.type === 'lecture')
-    if (lectureStage) {
-      lectureStage.time += diff
+  if (stageCount > 0 && totalMinutes > 0) {  // 添加判断，确保stageCount和totalMinutes大于0
+    // 根据环节类型分配时间比例
+    stages.value = stages.value.map(stage => {
+      let percent = 0
+      switch (stage.type) {
+        case 'lecture':
+          percent = 40
+          break
+        case 'practice':
+        case 'interaction':
+          percent = 20
+          break
+        case 'review':
+        case 'import':
+        case 'summary':
+          percent = 10
+          break
+        default:
+          percent = 10
+      }
+      
+      // 计算实际时间
+      const time = Math.round((percent / 100) * totalMinutes)
+      return { ...stage, time, percent }
+    })
+    
+    // 调整总时间
+    const currentTotal = stages.value.reduce((sum, stage) => sum + (stage.time || 0), 0)
+    if (currentTotal !== totalMinutes) {
+      const diff = totalMinutes - currentTotal
+      // 将剩余时间加到讲授环节
+      const lectureStage = stages.value.find(stage => stage.type === 'lecture')
+      if (lectureStage) {
+        lectureStage.time += diff
+        lectureStage.percent = Math.round((lectureStage.time / totalMinutes) * 100)
+      }
     }
   }
 }
 
 const handlePreviewResource = (file: any) => {
-  // TODO: 实现资源预览功能
-  console.log('预览资源:', file)
+  // 如果是已使用资源列表中的资源
+  if (file.url) {
+    window.open(file.url, '_blank')
+  } else {
+    // 如果是上传的文件
+    const url = URL.createObjectURL(file.raw)
+    window.open(url, '_blank')
+  }
 }
 
 const handleRemoveResource = (file: any) => {
-  // TODO: 实现资源删除功能
-  console.log('删除资源:', file)
+  // 从已使用资源列表中移除
+  const index = usedResources.value.findIndex(r => r.name === file.name)
+  if (index > -1) {
+    usedResources.value.splice(index, 1)
+    ElMessage.success('资源已移除')
+  }
 }
 
 const beforeRemoveResource = (file: any) => {
@@ -675,13 +1729,13 @@ const handleExceed = () => {
 }
 
 const timeline = computed(() => {
-  const total = totalTime.value || 1
+  const totalMinutes = form.value.duration * 45
   return stages.value.map(stage => ({
     id: stage.id,
     name: stage.name,
     time: stage.time,
     color: colorMap[stage.type] || '#BDBDBD',
-    percent: Math.round((stage.time / total) * 100)
+    percent: Math.round((stage.time / totalMinutes) * 100)
   }))
 })
 
@@ -745,20 +1799,59 @@ const addStage = () => {
     desc = defaultStageDesc(addStageType.value)
   }
   if (!name) return
+  
+  // 计算新环节的时间
+  const totalMinutes = form.value.duration * 45
+  const currentTotal = stages.value.reduce((sum, stage) => sum + stage.time, 0)
+  const remainingTime = totalMinutes - currentTotal
+  const newTime = Math.min(remainingTime, 10) // 默认10分钟，但不超过剩余时间
+  
   stages.value.push({
     id: nanoid(),
     type: addStageType.value,
     name,
-    time: 10,
+    time: newTime,
     desc
   })
+  
+  // 如果添加新环节后总时间超过限制，调整其他环节的时间
+  if (currentTotal + newTime > totalMinutes) {
+    const excess = (currentTotal + newTime) - totalMinutes
+    const otherStages = stages.value.filter(s => s.id !== stages.value[stages.value.length - 1].id)
+    const totalOtherTime = otherStages.reduce((sum, s) => sum + s.time, 0)
+    
+    otherStages.forEach(stage => {
+      const ratio = stage.time / totalOtherTime
+      stage.time = Math.max(5, Math.round(stage.time - (excess * ratio)))
+    })
+  }
+  
   showAddDialog.value = false
   addStageType.value = ''
   addStageName.value = ''
+  ElMessage.success('已添加新环节')
 }
 
 const removeStage = (idx: number) => {
+  ElMessageBox.confirm('确定要删除该环节吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    const removedTime = stages.value[idx].time
   stages.value.splice(idx, 1)
+    
+    // 将删除环节的时间分配给其他环节
+    if (stages.value.length > 0) {
+      const totalRemainingTime = stages.value.reduce((sum, s) => sum + s.time, 0)
+      stages.value.forEach(stage => {
+        const ratio = stage.time / totalRemainingTime
+        stage.time = Math.round(stage.time + (removedTime * ratio))
+      })
+    }
+    
+    ElMessage.success('已删除该环节')
+  }).catch(() => {})
 }
 
 const handleStageTypeChange = (stage: any, idx: number) => {
@@ -807,6 +1900,7 @@ const handleAutoGenerateContent = async () => {
   form.value.keyPoints = ''
   form.value.difficultPoints = ''
   form.value.procedure = ''
+  
   await sleep(2000)
   // 打字机效果
   for (let i = 0; i < autoContent.objectives.length; i++) {
@@ -836,7 +1930,25 @@ const handleAutoGenerateContent = async () => {
     await sleep(10)
   }
   typing.value = false
+  
+  // 在所有内容生成完成后再设置AI生成标记
+  if (form.value.objectives && form.value.keyPoints && form.value.difficultPoints && form.value.procedure) {
+    isContentAIGenerated.value = true
+    ElMessage.success('教学内容已自动生成')
+  }
 }
+
+// 监听内容是否为空，如果全部为空则移除AI标记
+watch([
+  () => form.value.objectives,
+  () => form.value.keyPoints,
+  () => form.value.difficultPoints,
+  () => form.value.procedure
+], ([objectives, keyPoints, difficultPoints, procedure]) => {
+  if (!objectives && !keyPoints && !difficultPoints && !procedure) {
+    isContentAIGenerated.value = false
+  }
+}, { deep: true })
 
 // 禁用日期（只能选择今天及以后的日期）
 const disabledDate = (time: Date) => {
@@ -913,24 +2025,26 @@ const handleDragEnd = () => {
 
 // 监听教学环节时间变化，更新总时间
 watch(stages, (newStages) => {
-  const totalMinutes = newStages.reduce((sum, stage) => sum + stage.time, 0)
-  if (totalMinutes !== form.value.duration * 45) {
+  const totalMinutes = newStages.reduce((sum, stage) => sum + (stage.time || 0), 0)
+  if (totalMinutes > 0) {  // 添加判断，确保totalMinutes大于0
     form.value.duration = Math.ceil(totalMinutes / 45)
   }
 }, { deep: true })
 
 // 监听课时变化，调整教学环节时间
 watch(() => form.value.duration, (newDuration) => {
-  const totalMinutes = newDuration * 45
-  const currentTotal = stages.value.reduce((sum, stage) => sum + stage.time, 0)
-  
-  if (currentTotal !== totalMinutes) {
-    // 按比例调整各环节时间
-    const ratio = totalMinutes / currentTotal
-    stages.value = stages.value.map(stage => ({
-      ...stage,
-      time: Math.round(stage.time * ratio)
-    }))
+  if (newDuration > 0) {  // 添加判断，确保newDuration大于0
+    const totalMinutes = newDuration * 45
+    const currentTotal = stages.value.reduce((sum, stage) => sum + (stage.time || 0), 0)
+    
+    if (currentTotal > 0) {  // 添加判断，确保currentTotal大于0
+      // 按比例调整各环节时间
+      const ratio = totalMinutes / currentTotal
+      stages.value = stages.value.map(stage => ({
+        ...stage,
+        time: Math.round((stage.time || 0) * ratio)
+      }))
+    }
   }
 })
 
@@ -960,7 +2074,8 @@ const handleResize = (event: MouseEvent) => {
   
   const barWidth = timelineBar.clientWidth
   const deltaX = event.clientX - resizeStartX.value
-  const deltaMinutes = Math.round((deltaX / barWidth) * (form.value.duration * 45))
+  const totalMinutes = form.value.duration * 45
+  const deltaPercent = (deltaX / barWidth) * 100
   
   if (resizeDirection.value === 'left') {
     // 调整左侧环节的时间
@@ -968,10 +2083,17 @@ const handleResize = (event: MouseEvent) => {
       const prevStage = stages.value[resizeStageIndex.value - 1]
       const currentStage = stages.value[resizeStageIndex.value]
       
+      // 计算最小时间（5分钟）对应的百分比
+      const minPercent = (5 / totalMinutes) * 100
+      
       // 确保时间不会小于5分钟
-      if (currentStage.time - deltaMinutes >= 5 && prevStage.time + deltaMinutes >= 5) {
-        currentStage.time -= deltaMinutes
-        prevStage.time += deltaMinutes
+      if (currentStage.percent - deltaPercent >= minPercent && prevStage.percent + deltaPercent >= minPercent) {
+        currentStage.percent -= deltaPercent
+        prevStage.percent += deltaPercent
+        
+        // 更新实际时间
+        currentStage.time = Math.round((currentStage.percent / 100) * totalMinutes)
+        prevStage.time = Math.round((prevStage.percent / 100) * totalMinutes)
       }
     }
   } else {
@@ -980,10 +2102,17 @@ const handleResize = (event: MouseEvent) => {
       const currentStage = stages.value[resizeStageIndex.value]
       const nextStage = stages.value[resizeStageIndex.value + 1]
       
+      // 计算最小时间（5分钟）对应的百分比
+      const minPercent = (5 / totalMinutes) * 100
+      
       // 确保时间不会小于5分钟
-      if (currentStage.time + deltaMinutes >= 5 && nextStage.time - deltaMinutes >= 5) {
-        currentStage.time += deltaMinutes
-        nextStage.time -= deltaMinutes
+      if (currentStage.percent + deltaPercent >= minPercent && nextStage.percent - deltaPercent >= minPercent) {
+        currentStage.percent += deltaPercent
+        nextStage.percent -= deltaPercent
+        
+        // 更新实际时间
+        currentStage.time = Math.round((currentStage.percent / 100) * totalMinutes)
+        nextStage.time = Math.round((nextStage.percent / 100) * totalMinutes)
       }
     }
   }
@@ -1002,6 +2131,215 @@ const stopResize = () => {
   document.removeEventListener('mousemove', handleResize)
   document.removeEventListener('mouseup', stopResize)
 }
+
+// 资源来源选择
+const resourceSource = ref('upload')
+const selectedResourceType = ref('all')
+const generating = ref(false)
+
+// AI推荐资源列表
+const aiResources = ref([])
+
+// 根据类型过滤资源
+const filteredResources = computed(() => {
+  if (selectedResourceType.value === 'all') {
+    return aiResources.value
+  }
+  return aiResources.value.filter(resource => resource.type === selectedResourceType.value)
+})
+
+// 获取资源图标
+const getResourceIcon = (type: string) => {
+  const iconMap: Record<string, any> = {
+    ppt: Collection,
+    doc: Document,
+    video: VideoPlay,
+    image: Picture
+  }
+  return iconMap[type] || Document
+}
+
+// 获取资源图标颜色
+const getResourceIconColor = (type: string) => {
+  const colorMap: Record<string, string> = {
+    ppt: '#FF9800',
+    doc: '#2196F3',
+    video: '#F44336',
+    image: '#4CAF50'
+  }
+  return colorMap[type] || '#909399'
+}
+
+// 生成AI推荐资源
+const handleGenerateResources = async () => {
+  generating.value = true
+  try {
+    // 模拟API调用
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    // 生成推荐资源
+    aiResources.value = [
+      {
+        id: '1',
+        name: '线性回归基础概念PPT',
+        type: 'ppt',
+        description: '包含线性回归的基本概念、数学原理和实际应用案例',
+        tags: ['基础概念', '数学原理', '案例分析'],
+        url: 'https://example.com/ppt1'
+      },
+      {
+        id: '2',
+        name: '梯度下降算法详解',
+        type: 'doc',
+        description: '详细讲解梯度下降算法的原理、实现方法和优化技巧',
+        tags: ['算法', '优化', '实现'],
+        url: 'https://example.com/doc1'
+      },
+      {
+        id: '3',
+        name: '线性回归实战案例',
+        type: 'video',
+        description: '通过实际案例演示线性回归模型的训练和评估过程',
+        tags: ['实战', '案例', '演示'],
+        url: 'https://example.com/video1'
+      },
+      {
+        id: '4',
+        name: '正则化方法图解',
+        type: 'image',
+        description: '直观展示不同正则化方法对模型参数的影响',
+        tags: ['正则化', '可视化', '图解'],
+        url: 'https://example.com/image1'
+      }
+    ]
+    
+    ElMessage.success('资源生成成功')
+  } catch (error) {
+    ElMessage.error('资源生成失败')
+  } finally {
+    generating.value = false
+  }
+}
+
+// 预览AI推荐资源
+const handlePreviewAIResource = (resource: any) => {
+  // TODO: 实现资源预览功能
+  ElMessage.info(`预览资源：${resource.name}`)
+}
+
+// 使用AI推荐资源
+const handleUseAIResource = (resource: any) => {
+  // 检查是否已经添加过该资源
+  const exists = usedResources.value.some(r => r.id === resource.id)
+  if (exists) {
+    ElMessage.warning('该资源已经添加过了')
+    return
+  }
+  
+  // 添加到已使用资源列表
+  usedResources.value.push({
+    ...resource,
+    id: nanoid() // 生成新的ID
+  })
+  ElMessage.success(`已添加资源：${resource.name}`)
+}
+
+// 已使用资源列表
+const usedResources = ref([])
+
+// 获取资源类型标签
+const getResourceTypeLabel = (type: string) => {
+  const typeMap: Record<string, string> = {
+    ppt: '课件',
+    doc: '文档',
+    video: '视频',
+    image: '图片'
+  }
+  return typeMap[type] || '其他'
+}
+
+// 获取资源标签类型
+const getResourceTagType = (type: string) => {
+  const typeMap: Record<string, string> = {
+    ppt: 'warning',
+    doc: 'info',
+    video: 'danger',
+    image: 'success'
+  }
+  return typeMap[type] || ''
+}
+
+// 表格行样式
+const tableRowClassName = ({ row }: { row: any }) => {
+  return 'resource-table-row'
+}
+
+// 移除已使用资源
+const handleRemoveUsedResource = (resource: any) => {
+  const index = usedResources.value.findIndex(r => r.id === resource.id)
+  if (index > -1) {
+    usedResources.value.splice(index, 1)
+    ElMessage.success('资源已移除')
+  }
+}
+
+// 排序资源
+const handleSortResources = () => {
+  // TODO: 实现资源排序功能
+  ElMessage.info('资源排序功能开发中')
+}
+
+// 监听教学环节时间变化，更新总时间
+watch(stages, (newStages) => {
+  const totalMinutes = newStages.reduce((sum, stage) => sum + (stage.time || 0), 0)
+  if (totalMinutes > 0) {  // 添加判断，确保totalMinutes大于0
+    form.value.duration = Math.ceil(totalMinutes / 45)
+  }
+}, { deep: true })
+
+// 监听课时变化，调整教学环节时间
+watch(() => form.value.duration, (newDuration) => {
+  if (newDuration > 0) {  // 添加判断，确保newDuration大于0
+    const totalMinutes = newDuration * 45
+    const currentTotal = stages.value.reduce((sum, stage) => sum + (stage.time || 0), 0)
+    
+    if (currentTotal > 0) {  // 添加判断，确保currentTotal大于0
+      // 按比例调整各环节时间
+      const ratio = totalMinutes / currentTotal
+      stages.value = stages.value.map(stage => ({
+        ...stage,
+        time: Math.round((stage.time || 0) * ratio)
+      }))
+    }
+  }
+})
+
+// 初始化时设置时间比例
+onMounted(() => {
+  // 确保初始课时大于0
+  if (form.value.duration <= 0) {
+    form.value.duration = 2
+  }
+  handleAutoAllocate()
+})
+
+// 处理资源上传变化
+const handleResourceChange = (file: any) => {
+  if (file.status === 'ready') {
+    // 将上传的资源添加到已使用资源列表
+    const fileType = getFileType(file.name)
+    usedResources.value.push({
+      id: nanoid(),
+      name: file.name,
+      type: fileType,
+      description: `上传的${getResourceTypeLabel(fileType)}资源`,
+      tags: ['上传资源'],
+      url: URL.createObjectURL(file.raw)
+    })
+    ElMessage.success(`已添加资源：${file.name}`)
+  }
+}
+
 </script>
 
 <style scoped>
@@ -1067,27 +2405,91 @@ const stopResize = () => {
 
 .button-group {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 16px;
   margin-top: 20px;
+  padding: 20px 0;
+}
+
+.button-group .el-button {
+  min-width: 100px;
 }
 
 .preview-content {
   padding: 20px;
+  line-height: 1.6;
 }
 
 .preview-content h2 {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  color: #303133;
 }
 
 .preview-content h3 {
-  margin: 16px 0 8px;
+  margin: 20px 0 12px;
+  color: #303133;
+  font-size: 16px;
+  font-weight: 500;
+  border-bottom: 1px solid #EBEEF5;
+  padding-bottom: 8px;
 }
 
 .preview-content p {
   margin: 8px 0;
-  line-height: 1.6;
+  color: #606266;
+  white-space: pre-wrap;
+}
+
+.preview-list {
+  margin: 8px 0;
+}
+
+.preview-item {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.stage-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.stage-name {
+  font-weight: 500;
+  color: #303133;
+}
+
+.stage-time {
+  color: #409EFF;
+  font-size: 14px;
+}
+
+.stage-desc {
+  color: #606266;
+  margin: 0;
+}
+
+.resource-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.resource-name {
+  font-weight: 500;
+  color: #303133;
+}
+
+.resource-desc {
+  color: #606266;
+  margin: 0;
+  font-size: 14px;
 }
 
 .time-unit {
@@ -1230,5 +2632,226 @@ const stopResize = () => {
 .time-separator {
   color: #909399;
   font-size: 14px;
+}
+
+.ai-resources {
+  padding: 16px 0;
+}
+
+.resource-filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.resource-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.resource-card {
+  transition: all 0.3s;
+}
+
+.resource-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.resource-info {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.resource-details {
+  flex: 1;
+}
+
+.resource-details h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #303133;
+}
+
+.resource-details p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.4;
+}
+
+.resource-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.resource-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #EBEEF5;
+}
+
+.empty-resources {
+  padding: 40px 0;
+}
+
+.used-resources {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #EBEEF5;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: 14px;
+  color: #606266;
+  font-weight: normal;
+}
+
+.resource-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+:deep(.resource-table-row) {
+  transition: background-color 0.3s;
+}
+
+:deep(.resource-table-row:hover) {
+  background-color: #f5f7fa;
+}
+
+:deep(.el-table .cell) {
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+:deep(.el-table--small) {
+  font-size: 14px;
+}
+
+:deep(.el-table--small .el-table__cell) {
+  padding: 4px 0;
+}
+
+:deep(.el-empty__description) {
+  font-size: 14px;
+  color: #909399;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-tag {
+  font-weight: normal;
+}
+
+.analysis-section {
+  padding: 20px;
+}
+
+.analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.analysis-header h3 {
+  margin: 0;
+  color: #303133;
+}
+
+.total-score {
+  font-size: 16px;
+  color: #606266;
+}
+
+.total-score .score {
+  font-size: 24px;
+  font-weight: bold;
+  color: #409EFF;
+}
+
+.analysis-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.analysis-item {
+  background: #f5f7fa;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.analysis-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.item-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.analysis-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.analysis-details h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #606266;
+}
+
+.analysis-details ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.analysis-details li {
+  margin-bottom: 4px;
+  color: #606266;
+  line-height: 1.5;
+}
+
+.strengths h4 {
+  color: #67C23A;
+}
+
+.weaknesses h4 {
+  color: #E6A23C;
+}
+
+.suggestions h4 {
+  color: #409EFF;
+}
+
+.empty-analysis {
+  padding: 40px 0;
 }
 </style> 

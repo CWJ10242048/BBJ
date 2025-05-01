@@ -1,2 +1,6 @@
+D:\computer design\BBJ\backend\src\main\java\com\bbj\entity\HistoryRecord.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\repository\HistoryRecordRepository.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\config\WebConfig.java
 D:\computer design\BBJ\backend\src\main\java\com\bbj\BBJApplication.java
 D:\computer design\BBJ\backend\src\main\java\com\bbj\controller\FileController.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\controller\HistoryController.java

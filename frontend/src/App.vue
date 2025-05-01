@@ -12,11 +12,22 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow: hidden; /* 禁用默认滚动条 */
 }
 
 #app {
   height: 100%;
-  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app-container {
+  display: flex;
+  height: 100%;
+}
+
+.app-container > * {
+  flex: 1;
+  overflow-y: auto;
 }
 </style>

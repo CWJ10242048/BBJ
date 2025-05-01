@@ -10,19 +10,43 @@
         </div>
       </template>
       <div class="upload-container">
-        <el-upload
-          class="upload-demo"
-          :auto-upload="false"
-          :show-file-list="false"
-          @change="handleFileChange"
-          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          :before-upload="beforeUpload"
-        >
-          <el-button type="primary">上传教学大纲</el-button>
-          <template #tip>
-            <div class="el-upload__tip">支持PDF、Word文档格式</div>
-          </template>
-        </el-upload>
+        <el-radio-group v-model="syllabusSource" size="small" class="syllabus-source">
+          <el-radio-button label="upload">上传新大纲</el-radio-button>
+          <el-radio-button label="history">选择历史大纲</el-radio-button>
+        </el-radio-group>
+
+        <div v-if="syllabusSource === 'upload'" class="upload-section">
+          <el-upload
+            class="upload-demo"
+            :auto-upload="false"
+            :show-file-list="false"
+            @change="handleFileChange"
+            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            :before-upload="beforeUpload"
+          >
+            <el-button type="primary">上传教学大纲</el-button>
+            <template #tip>
+              <div class="el-upload__tip">支持PDF、Word文档格式</div>
+            </template>
+          </el-upload>
+        </div>
+
+        <div v-else class="history-section">
+          <el-select
+            v-model="selectedHistorySyllabus"
+            placeholder="请选择历史教学大纲"
+            style="width: 100%"
+            filterable
+          >
+            <el-option
+              v-for="item in historySyllabusList"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </div>
+
         <el-progress
           v-if="uploadProgress > 0"
           :percentage="uploadProgress"
@@ -44,6 +68,7 @@
       <template #header>
         <div class="card-header">
           <span>教案基本信息</span>
+          <el-tag v-if="isBasicInfoAIGenerated" type="success" effect="dark">AI自动生成</el-tag>
         </div>
       </template>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
@@ -74,11 +99,25 @@
           </el-select>
         </el-form-item>
         <el-form-item label="授课时间" prop="date">
-          <el-date-picker
-            v-model="form.date"
-            type="datetime"
-            placeholder="选择授课时间"
-          />
+          <div class="time-range-picker">
+            <el-date-picker
+              v-model="form.startTime"
+              type="datetime"
+              placeholder="开始时间"
+              :disabled-date="disabledDate"
+              :disabled-hours="disabledHours"
+              :disabled-minutes="disabledMinutes"
+            />
+            <span class="time-separator">至</span>
+            <el-date-picker
+              v-model="form.endTime"
+              type="datetime"
+              placeholder="结束时间"
+              :disabled-date="disabledDate"
+              :disabled-hours="disabledHours"
+              :disabled-minutes="disabledMinutes"
+            />
+          </div>
         </el-form-item>
         <el-form-item label="课次" prop="lessonNumber">
           <div class="number-control">
@@ -163,10 +202,17 @@
           v-for="(item, idx) in timeline"
           :key="item.id"
           class="timeline-segment"
-          :style="{ width: item.percent + '%', background: item.color, borderRight: idx < timeline.length - 1 ? '2px solid #fff' : 'none' }"
+          :style="{ width: item.percent + '%', background: item.color }"
           :title="item.name + '：' + item.time + '分钟'"
+          draggable="true"
+          @dragstart="handleDragStart($event, idx)"
+          @dragover.prevent="handleDragOver($event, idx)"
+          @drop="handleDrop($event, idx)"
+          @dragend="handleDragEnd"
         >
           <span class="timeline-label">{{ item.name }}<span v-if="item.time">({{ item.time }})</span></span>
+          <div class="resize-handle left" @mousedown="startResize($event, idx, 'left')"></div>
+          <div class="resize-handle right" @mousedown="startResize($event, idx, 'right')"></div>
         </div>
       </div>
       <div class="total-time-info">
@@ -191,7 +237,10 @@
       <template #header>
         <div class="card-header">
           <span>教学内容</span>
-          <el-button type="primary" size="small" @click="handleAutoGenerateContent" :disabled="typing">自动生成</el-button>
+          <div class="header-right">
+            <el-tag v-if="isContentAIGenerated" type="success" effect="dark">AI自动生成</el-tag>
+            <el-button type="primary" size="small" @click="handleAutoGenerateContent" :disabled="typing">自动生成</el-button>
+          </div>
         </div>
       </template>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
@@ -291,7 +340,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Document, Delete } from '@element-plus/icons-vue'
 import { nanoid } from 'nanoid'
@@ -308,7 +357,16 @@ const form = ref({
   topic: '',
   teacher: '李老师',
   class: '',
-  date: (() => { const d = new Date(); d.setHours(8,0,0,0); return d; })(),
+  startTime: (() => { 
+    const d = new Date(); 
+    d.setHours(8, 0, 0, 0); 
+    return d; 
+  })(),
+  endTime: (() => { 
+    const d = new Date(); 
+    d.setHours(9, 40, 0, 0); 
+    return d; 
+  })(),
   lessonNumber: 1,
   duration: 2,
   objectives: '',
@@ -332,7 +390,8 @@ const rules = {
   topic: [{ required: true, message: '请输入课程主题', trigger: 'blur' }],
   teacher: [{ required: true, message: '请输入授课教师', trigger: 'blur' }],
   class: [{ required: true, message: '请输入授课班级', trigger: 'blur' }],
-  date: [{ required: true, message: '请选择授课时间', trigger: 'change' }],
+  startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
+  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }],
   lessonNumber: [{ required: true, message: '请选择课次', trigger: 'change' }],
   duration: [{ required: true, message: '请选择课时', trigger: 'change' }],
   objectives: [{ required: true, message: '请输入教学目标', trigger: 'blur' }],
@@ -344,11 +403,11 @@ const rules = {
 const previewData = computed(() => {
   // 只保留主要字段
   const {
-    courseName, topic, teacher, class: className, date, lessonNumber, duration,
+    courseName, topic, teacher, class: className, startTime, endTime, lessonNumber, duration,
     objectives, keyPoints, difficultPoints, procedure, syllabus
   } = form.value
   return {
-    courseName, topic, teacher, class: className, date, lessonNumber, duration,
+    courseName, topic, teacher, class: className, startTime, endTime, lessonNumber, duration,
     objectives, keyPoints, difficultPoints, procedure, syllabus
   }
 })
@@ -359,7 +418,8 @@ const getLabel = (key: string) => {
     topic: '课程主题',
     teacher: '授课教师',
     class: '授课班级',
-    date: '授课时间',
+    startTime: '授课时间',
+    endTime: '授课时间',
     lessonNumber: '课次',
     duration: '课时',
     objectives: '教学目标',
@@ -371,9 +431,74 @@ const getLabel = (key: string) => {
   return labelMap[key] || key
 }
 
+const syllabusSource = ref('upload')
+const selectedHistorySyllabus = ref('')
+const historySyllabusList = ref([
+  { 
+    id: '1', 
+    name: '计算机导论教学大纲',
+    content: {
+      courseName: '计算机导论',
+      topic: '计算机系统概述',
+      objectives: '1. 了解计算机的基本组成和工作原理\n2. 掌握计算机系统的基本概念\n3. 理解计算机的发展历程',
+      keyPoints: '计算机硬件组成、操作系统基本概念、计算机网络基础',
+      difficultPoints: '计算机工作原理、数据表示与存储'
+    }
+  },
+  { 
+    id: '2', 
+    name: '数据结构教学大纲',
+    content: {
+      courseName: '数据结构',
+      topic: '线性表',
+      objectives: '1. 掌握线性表的基本概念和操作\n2. 理解顺序表和链表的实现原理\n3. 能够应用线性表解决实际问题',
+      keyPoints: '线性表的定义、顺序存储结构、链式存储结构',
+      difficultPoints: '链表的操作实现、时间复杂度分析'
+    }
+  },
+  { 
+    id: '3', 
+    name: '操作系统教学大纲',
+    content: {
+      courseName: '操作系统',
+      topic: '进程管理',
+      objectives: '1. 理解进程的概念和状态转换\n2. 掌握进程调度算法\n3. 了解进程同步与通信机制',
+      keyPoints: '进程控制块、进程调度、进程同步',
+      difficultPoints: '死锁问题、进程通信机制'
+    }
+  }
+])
+
+const isBasicInfoAIGenerated = ref(false)
+const isContentAIGenerated = ref(false)
+
+// 监听历史大纲选择变化
+watch(selectedHistorySyllabus, (newVal) => {
+  if (newVal) {
+    const selectedSyllabus = historySyllabusList.value.find(item => item.id === newVal)
+    if (selectedSyllabus && selectedSyllabus.content) {
+      // 自动填充表单内容
+      form.value.courseName = selectedSyllabus.content.courseName
+      form.value.topic = selectedSyllabus.content.topic
+      form.value.objectives = selectedSyllabus.content.objectives
+      form.value.keyPoints = selectedSyllabus.content.keyPoints
+      form.value.difficultPoints = selectedSyllabus.content.difficultPoints
+      form.value.syllabus = selectedSyllabus.name
+      
+      // 设置AI生成标记
+      isBasicInfoAIGenerated.value = true
+      isContentAIGenerated.value = true
+      
+      // 显示成功提示
+      ElMessage.success('已根据教学大纲自动填充内容')
+    }
+  }
+})
+
 const handleFileChange = (file: any) => {
   uploadProgress.value = 0
   uploadStatus.value = ''
+  selectedHistorySyllabus.value = '' // 清除历史大纲选择
   
   // 模拟上传进度
   const timer = setInterval(() => {
@@ -392,6 +517,7 @@ const removeFile = () => {
   form.value.syllabus = ''
   uploadProgress.value = 0
   uploadStatus.value = ''
+  selectedHistorySyllabus.value = ''
 }
 
 const beforeUpload = (file: File) => {
@@ -451,7 +577,16 @@ const handleReset = () => {
     topic: '',
     teacher: '李老师',
     class: '',
-    date: (() => { const d = new Date(); d.setHours(8,0,0,0); return d; })(),
+    startTime: (() => { 
+      const d = new Date(); 
+      d.setHours(8, 0, 0, 0); 
+      return d; 
+    })(),
+    endTime: (() => { 
+      const d = new Date(); 
+      d.setHours(9, 40, 0, 0); 
+      return d; 
+    })(),
     lessonNumber: 1,
     duration: 2,
     objectives: '',
@@ -471,6 +606,10 @@ const handleReset = () => {
   }
   uploadProgress.value = 0
   uploadStatus.value = ''
+  selectedHistorySyllabus.value = ''
+  // 重置AI生成标记
+  isBasicInfoAIGenerated.value = false
+  isContentAIGenerated.value = false
 }
 
 const handleTimeChange = () => {
@@ -480,13 +619,41 @@ const handleTimeChange = () => {
 }
 
 const handleAutoAllocate = () => {
-  const totalMinutes = form.value.duration * 60
-  form.value.importTime = Math.floor(totalMinutes * 0.1)
-  form.value.lectureTime = Math.floor(totalMinutes * 0.4)
-  form.value.interactionTime = Math.floor(totalMinutes * 0.2)
-  form.value.practiceTime = Math.floor(totalMinutes * 0.2)
-  form.value.summaryTime = totalMinutes - form.value.importTime - form.value.lectureTime - 
-                          form.value.interactionTime - form.value.practiceTime
+  const totalMinutes = form.value.duration * 45
+  const stageCount = stages.value.length
+  
+  // 根据环节类型分配时间
+  stages.value = stages.value.map(stage => {
+    let time = 0
+    switch (stage.type) {
+      case 'lecture':
+        time = Math.floor(totalMinutes * 0.4)
+        break
+      case 'practice':
+      case 'interaction':
+        time = Math.floor(totalMinutes * 0.2)
+        break
+      case 'review':
+      case 'import':
+      case 'summary':
+        time = Math.floor(totalMinutes * 0.1)
+        break
+      default:
+        time = Math.floor(totalMinutes * 0.1)
+    }
+    return { ...stage, time }
+  })
+  
+  // 调整总时间
+  const currentTotal = stages.value.reduce((sum, stage) => sum + stage.time, 0)
+  if (currentTotal !== totalMinutes) {
+    const diff = totalMinutes - currentTotal
+    // 将剩余时间加到讲授环节
+    const lectureStage = stages.value.find(stage => stage.type === 'lecture')
+    if (lectureStage) {
+      lectureStage.time += diff
+    }
+  }
 }
 
 const handlePreviewResource = (file: any) => {
@@ -605,7 +772,7 @@ const handleStageTypeChange = (stage: any, idx: number) => {
 }
 
 const totalTime = computed(() => stages.value.reduce((sum, s) => sum + (s.time || 0), 0))
-const isTimeMismatch = computed(() => totalTime.value !== form.value.duration * 60)
+const isTimeMismatch = computed(() => totalTime.value !== form.value.duration * 45)
 
 const classOptions = [
   '计算机科学与技术2201班',
@@ -670,6 +837,171 @@ const handleAutoGenerateContent = async () => {
   }
   typing.value = false
 }
+
+// 禁用日期（只能选择今天及以后的日期）
+const disabledDate = (time: Date) => {
+  return time.getTime() < Date.now() - 8.64e7
+}
+
+// 禁用非工作时间（8:00-21:00）
+const disabledHours = () => {
+  const hours = []
+  for (let i = 0; i < 24; i++) {
+    if (i < 8 || i > 21) {
+      hours.push(i)
+    }
+  }
+  return hours
+}
+
+// 禁用非整点时间（只能选择整点或30分）
+const disabledMinutes = (hour: number) => {
+  const minutes = []
+  for (let i = 0; i < 60; i++) {
+    if (i % 30 !== 0) {
+      minutes.push(i)
+    }
+  }
+  return minutes
+}
+
+// 监听时间变化，自动计算课时
+watch([() => form.value.startTime, () => form.value.endTime], ([start, end]) => {
+  if (start && end) {
+    const diff = end.getTime() - start.getTime()
+    const minutes = Math.floor(diff / (1000 * 60))
+    form.value.duration = Math.ceil(minutes / 45) // 每45分钟一节课
+  }
+})
+
+const draggedIndex = ref(-1)
+const draggedOverIndex = ref(-1)
+
+const handleDragStart = (event: DragEvent, index: number) => {
+  if (isResizing.value) {
+    event.preventDefault()
+    return
+  }
+  draggedIndex.value = index
+  event.dataTransfer?.setData('text/plain', index.toString())
+}
+
+const handleDragOver = (event: DragEvent, index: number) => {
+  event.preventDefault()
+  draggedOverIndex.value = index
+}
+
+const handleDrop = (event: DragEvent, index: number) => {
+  event.preventDefault()
+  if (draggedIndex.value === -1 || draggedOverIndex.value === -1) return
+  
+  // 交换教学环节顺序
+  const stagesCopy = [...stages.value]
+  const [draggedStage] = stagesCopy.splice(draggedIndex.value, 1)
+  stagesCopy.splice(index, 0, draggedStage)
+  stages.value = stagesCopy
+  
+  // 重置拖拽状态
+  draggedIndex.value = -1
+  draggedOverIndex.value = -1
+}
+
+const handleDragEnd = () => {
+  draggedIndex.value = -1
+  draggedOverIndex.value = -1
+}
+
+// 监听教学环节时间变化，更新总时间
+watch(stages, (newStages) => {
+  const totalMinutes = newStages.reduce((sum, stage) => sum + stage.time, 0)
+  if (totalMinutes !== form.value.duration * 45) {
+    form.value.duration = Math.ceil(totalMinutes / 45)
+  }
+}, { deep: true })
+
+// 监听课时变化，调整教学环节时间
+watch(() => form.value.duration, (newDuration) => {
+  const totalMinutes = newDuration * 45
+  const currentTotal = stages.value.reduce((sum, stage) => sum + stage.time, 0)
+  
+  if (currentTotal !== totalMinutes) {
+    // 按比例调整各环节时间
+    const ratio = totalMinutes / currentTotal
+    stages.value = stages.value.map(stage => ({
+      ...stage,
+      time: Math.round(stage.time * ratio)
+    }))
+  }
+})
+
+const isResizing = ref(false)
+const resizeDirection = ref('')
+const resizeStartX = ref(0)
+const resizeStartWidth = ref(0)
+const resizeStageIndex = ref(-1)
+
+const startResize = (event: MouseEvent, index: number, direction: string) => {
+  isResizing.value = true
+  resizeDirection.value = direction
+  resizeStartX.value = event.clientX
+  resizeStartWidth.value = stages.value[index].time
+  resizeStageIndex.value = index
+  
+  // 添加全局鼠标事件监听
+  document.addEventListener('mousemove', handleResize)
+  document.addEventListener('mouseup', stopResize)
+}
+
+const handleResize = (event: MouseEvent) => {
+  if (!isResizing.value) return
+  
+  const timelineBar = document.querySelector('.timeline-bar')
+  if (!timelineBar) return
+  
+  const barWidth = timelineBar.clientWidth
+  const deltaX = event.clientX - resizeStartX.value
+  const deltaMinutes = Math.round((deltaX / barWidth) * (form.value.duration * 45))
+  
+  if (resizeDirection.value === 'left') {
+    // 调整左侧环节的时间
+    if (resizeStageIndex.value > 0) {
+      const prevStage = stages.value[resizeStageIndex.value - 1]
+      const currentStage = stages.value[resizeStageIndex.value]
+      
+      // 确保时间不会小于5分钟
+      if (currentStage.time - deltaMinutes >= 5 && prevStage.time + deltaMinutes >= 5) {
+        currentStage.time -= deltaMinutes
+        prevStage.time += deltaMinutes
+      }
+    }
+  } else {
+    // 调整右侧环节的时间
+    if (resizeStageIndex.value < stages.value.length - 1) {
+      const currentStage = stages.value[resizeStageIndex.value]
+      const nextStage = stages.value[resizeStageIndex.value + 1]
+      
+      // 确保时间不会小于5分钟
+      if (currentStage.time + deltaMinutes >= 5 && nextStage.time - deltaMinutes >= 5) {
+        currentStage.time += deltaMinutes
+        nextStage.time -= deltaMinutes
+      }
+    }
+  }
+  
+  resizeStartX.value = event.clientX
+}
+
+const stopResize = () => {
+  isResizing.value = false
+  resizeDirection.value = ''
+  resizeStartX.value = 0
+  resizeStartWidth.value = 0
+  resizeStageIndex.value = -1
+  
+  // 移除全局鼠标事件监听
+  document.removeEventListener('mousemove', handleResize)
+  document.removeEventListener('mouseup', stopResize)
+}
 </script>
 
 <style scoped>
@@ -687,40 +1019,23 @@ const handleAutoGenerateContent = async () => {
   align-items: center;
 }
 
-.button-group {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.preview-content {
-  padding: 20px;
-}
-
-.preview-content h2 {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.preview-content h3 {
-  margin: 15px 0;
-  color: #409EFF;
-}
-
-.preview-content p {
-  margin: 10px 0;
-  line-height: 1.6;
-}
-
 .upload-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
+}
+
+.syllabus-source {
+  margin-bottom: 16px;
+}
+
+.upload-section,
+.history-section {
+  width: 100%;
 }
 
 .upload-progress {
-  width: 100%;
+  margin-top: 8px;
 }
 
 .file-info {
@@ -730,7 +1045,6 @@ const handleAutoGenerateContent = async () => {
   padding: 8px;
   background-color: #f5f7fa;
   border-radius: 4px;
-  margin-top: 10px;
 }
 
 .file-name {
@@ -742,28 +1056,38 @@ const handleAutoGenerateContent = async () => {
 
 .number-control {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .number {
-  display: inline-block;
-  min-width: 28px;
+  min-width: 40px;
   text-align: center;
-  font-size: 14px;
-  font-weight: 400;
-  color: #409EFF;
 }
 
-.upload-demo {
-  margin-bottom: 10px;
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 20px;
 }
 
-.el-upload__tip {
-  color: #909399;
-  font-size: 12px;
-  margin-top: 5px;
+.preview-content {
+  padding: 20px;
+}
+
+.preview-content h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.preview-content h3 {
+  margin: 16px 0 8px;
+}
+
+.preview-content p {
+  margin: 8px 0;
+  line-height: 1.6;
 }
 
 .time-unit {
@@ -809,9 +1133,34 @@ const handleAutoGenerateContent = async () => {
   transition: width 0.3s;
   white-space: nowrap;
   border-right: 2px solid #fff;
+  cursor: move;
+  user-select: none;
 }
 .timeline-segment:last-child {
   border-right: none;
+}
+.resize-handle {
+  position: absolute;
+  width: 4px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: ew-resize;
+  transition: background-color 0.2s;
+}
+.resize-handle:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+.resize-handle.left {
+  left: 0;
+}
+.resize-handle.right {
+  right: 0;
+}
+.timeline-segment.dragging {
+  opacity: 0.5;
+}
+.timeline-segment.drag-over {
+  border: 2px dashed #fff;
 }
 .timeline-label {
   width: 100%;
@@ -820,6 +1169,7 @@ const handleAutoGenerateContent = async () => {
   text-shadow: 0 1px 2px #0002;
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 .stages-list {
@@ -859,5 +1209,26 @@ const handleAutoGenerateContent = async () => {
 .total-time-info {
   margin-top: 8px;
   font-size: 15px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.el-tag {
+  margin-left: 8px;
+}
+
+.time-range-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.time-separator {
+  color: #909399;
+  font-size: 14px;
 }
 </style> 

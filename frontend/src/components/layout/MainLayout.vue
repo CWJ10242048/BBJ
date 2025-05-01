@@ -34,16 +34,24 @@ watch(sidebarCollapsed, (newValue) => {
 .layout-container {
   height: 100vh;
   background-color: #f5f7fa;
+  display: flex;
+  overflow: hidden; /* 禁用外层容器滚动 */
+  padding: 0;
+  margin: 0;
 }
 
 .main-container {
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; 
+  flex: 1;
+  padding: 0;
+  margin: 0;
 }
 
 .content-main {
   padding: 15px;
-  overflow-y: auto;
+  overflow-y: auto; /* 只在内容区域保留滚动 */
   background-color: #f5f7fa;
+  height: calc(100vh - 60px); /* 减去头部高度 */
 }
 </style>

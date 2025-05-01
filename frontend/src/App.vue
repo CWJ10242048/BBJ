@@ -6,6 +6,17 @@
 import { RouterView } from 'vue-router'
 </script>
 
-<style scoped>
-/* 可以保留全局样式 */
+<style>
+/* 全局样式，移除多余滚动条 */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden; /* 禁用默认滚动条 */
+}
+
+#app {
+  height: 100%;
+  overflow: hidden;
+}
 </style>

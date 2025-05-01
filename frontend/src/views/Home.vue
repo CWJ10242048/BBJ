@@ -1,16 +1,5 @@
 <template>
   <div class="home-page">
-    <div class="page-header">
-      <div class="title-section">
-        <div class="line-decoration"></div>
-        <div class="title-container">
-          <div class="title-main">备倍佳</div>
-          <div class="title-sub">AI备课系统</div>
-        </div>
-        <div class="line-decoration"></div>
-      </div>
-    </div>
-
     <!-- 主要内容区 - 使用栅格布局 -->
     <el-row :gutter="20" class="content-row">
       <!-- 左侧区域 - 常用功能和最近备课 -->
@@ -382,48 +371,9 @@ const notices = ref([
   overflow: hidden; /* 防止内容溢出导致滚动条 */
 }
 
-.page-header {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-  overflow: hidden; /* 防止header部分产生滚动条 */
-}
-
-.title-section {
-  display: flex;
-  align-items: center;
-}
-
-.title-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.title-main {
-  font-size: 28px;
-  font-weight: bold;
-  color: #4a8ccf;
-  line-height: 1.2;
-}
-
-.title-sub {
-  font-size: 18px;
-  font-weight: bold;
-  color: #4a8ccf;
-  line-height: 1.2;
-}
-
-.line-decoration {
-  height: 2px;
-  width: 50px;
-  background: #4a8ccf;
-  margin: 0 15px;
-}
-
 /* 修改容器布局，确保四个模块完全对齐 */
 .content-row {
-  height: calc(100vh - 140px);
+  height: calc(100vh - 60px); /* 增加内容区域高度 */
   display: flex;
   overflow: hidden;
 }
@@ -479,7 +429,7 @@ const notices = ref([
 /* 模块卡片样式 */
 .module-card {
   margin-bottom: 0;
-  border-radius: 8px;
+  border-radius: 12px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
   overflow: hidden;
   display: flex;
@@ -496,6 +446,7 @@ const notices = ref([
   overflow: visible;
   background-color: #fff;
   border: none;
+  border-radius: 12px;
 }
 
 .function-card :deep(.el-card__body) {
@@ -505,6 +456,7 @@ const notices = ref([
   height: calc(100% - 56px);
   overflow: visible;
   background-color: #fff;
+  border-radius: 0 0 12px 12px;
 }
 
 .function-buttons-container {
@@ -518,26 +470,28 @@ const notices = ref([
 
 .function-button {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   height: 100%;
   width: 100%;
   border-radius: 10px;
   transition: all 0.25s ease;
-  padding: 20px 0;
+  padding: 20px 15px;
   margin: 0;
 }
 
 .function-button-icon {
   font-size: 24px;
-  margin-bottom: 8px;
+  margin-right: 10px;
+  margin-bottom: 0;
 }
 
 .function-button span {
   font-size: 14px;
   font-weight: 500;
-  margin-top: 6px;
+  margin-top: 0;
+  white-space: nowrap;
 }
 
 .function-button:hover {
@@ -927,6 +881,7 @@ const notices = ref([
   flex-direction: column;
   height: calc(100% - 56px); /* 减去卡片头部高度 */
   overflow: hidden;
+  border-radius: 0 0 12px 12px;
 }
 
 .header-icon {

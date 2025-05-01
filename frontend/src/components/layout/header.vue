@@ -1,46 +1,49 @@
 <template>
     <el-header class="header">
+      <!-- 左侧 LOGO 和导航区域 -->
       <div class="header-left">
         <div class="icon-div" @click="changeCollapse">
-          <el-icon><Fold /></el-icon>
+          <el-icon><Expand v-if="collapse" /><Fold v-else /></el-icon>
         </div>
-        <div class="logo-title">
+        <div class="logo-container">
           <span class="app-name">备倍佳</span>
-          <span class="app-subtitle">AI备课系统</span>
-        </div>
-        <div class="breadcrumb">
-          <el-breadcrumb separator="/">
-            <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item v-if="currentParentMenu">{{ currentParentMenu }}</el-breadcrumb-item>
-            <el-breadcrumb-item v-if="currentChildMenu && currentChildMenu !== currentParentMenu">{{ currentChildMenu }}</el-breadcrumb-item>
-          </el-breadcrumb>
         </div>
       </div>
-      <div class="header-right">
-        <div class="search-input">
+      
+      <!-- 中间搜索区域 -->
+      <div class="header-center">
+        <div class="search-container">
           <el-input 
             v-model="search" 
-            placeholder="搜索..." 
+            placeholder="dev/开课..." 
+            class="search-input"
             :prefix-icon="Search"
-            size="small"
             clearable
           ></el-input>
+          <el-button type="primary" class="search-btn">搜索</el-button>
         </div>
-        <div class="icon-div" @click="full">
-          <el-icon><FullScreen /></el-icon>
-        </div>
-        <div class="icon-div">
+      </div>
+      
+      <!-- 右侧用户信息和操作区 -->
+      <div class="header-right">
+        <div class="icon-div notification">
           <el-badge :value="3" :max="99" type="danger">
             <el-icon><Bell /></el-icon>
           </el-badge>
         </div>
-        <div class="icon-div">
+        
+        <div class="user-profile">
           <el-dropdown trigger="click" @command="handleCommand">
-            <span class="el-dropdown-link">
-              <el-avatar :size="32" src="/src/assets/image/lock-back.jpg" />
-            </span>
+            <div class="avatar-container">
+              <el-avatar :size="36" src="/src/assets/image/lock-back.jpg" />
+              <span class="username">李老师</span>
+              <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+            </div>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item command="profile">
+                  <el-icon><User /></el-icon><span>个人中心</span>
+                </el-dropdown-item>
                 <el-dropdown-item command="password">
                   <el-icon><Key /></el-icon><span>修改密码</span>
                 </el-dropdown-item>
@@ -54,10 +57,6 @@
             </template>
           </el-dropdown>
         </div>
-        <div class="user-info">
-          <div class="user-name">李老师</div>
-          <div class="user-role">教师</div>
-        </div>
       </div>
     </el-header>
 </template>
@@ -69,12 +68,15 @@ import { useUserStore } from '@/stores/user'
 import { useMenuStore } from '@/stores/menu'
 import { 
   Fold, 
+  Expand,
   FullScreen, 
   Bell, 
   Key, 
   Lock, 
   SwitchButton,
-  Search
+  Search,
+  ArrowDown,
+  User
 } from '@element-plus/icons-vue'
 
 // 定义emit
@@ -207,7 +209,9 @@ function full() {
 
 // 处理命令
 function handleCommand(command) {
-  if (command === "password") {
+  if (command === "profile") {
+    router.push("/profile")
+  } else if (command === "password") {
     if (window && window.$bus) {
       window.$bus.$emit('password', true)
     }
@@ -232,39 +236,20 @@ function handleCommand(command) {
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 0 20px;
+  padding: 0;
+  margin: 0;
   justify-content: space-between;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #e0e0e0; /* 与侧边栏边框颜色保持一致 */
+  box-sizing: border-box;
 }
 
+/* 左侧区域 */
 .header-left {
   display: flex;
   align-items: center;
-}
-
-.logo-title {
-  display: flex;
-  flex-direction: column;
-  margin-left: 10px;
-  line-height: 1.2;
-}
-
-.app-name {
-  font-size: 16px;
-  font-weight: bold;
-  color: #4a8ccf; /* 更淡的蓝色 */
-}
-
-.app-subtitle {
-  font-size: 12px;
-  color: #8c8c8c;
-}
-
-.breadcrumb {
-  margin-left: 20px;
-  font-size: 14px;
-  border-left: 1px solid #e0e0e0;
-  padding-left: 20px;
+  height: 100%;
+  padding: 0 15px;
+  box-sizing: border-box;
 }
 
 .icon-div {
@@ -274,47 +259,106 @@ function handleCommand(command) {
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  position: relative;
-  border-radius: 50%;
   color: #606266;
   transition: all 0.3s;
+  margin-right: 5px;
 }
 
 .icon-div:hover {
-  background-color: #f0f7ff;
-  color: #4a8ccf; /* 更淡的蓝色 */
+  color: #409EFF;
 }
 
+.logo-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  height: 100%;
+}
+
+.app-name {
+  font-size: 20px;
+  font-weight: bold;
+  color: #4a8ccf; /* 蓝色文字 */
+}
+
+/* 中间搜索区域 */
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  box-sizing: border-box;
+  height: 100%;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.search-input {
+  flex: 1;
+}
+
+.search-input :deep(.el-input__wrapper) {
+  border-radius: 4px 0 0 4px;
+  box-shadow: 0 0 0 1px #dcdfe6 inset;
+}
+
+.search-btn {
+  border-radius: 0 4px 4px 0;
+}
+
+/* 右侧用户区域 */
 .header-right {
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.notification {
+  margin-right: 15px;
+}
+
+.user-profile {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.avatar-container {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.search-input {
-  width: 220px;
-  margin-right: 10px;
-}
-
-.search-input :deep(.el-input__wrapper) {
-  background-color: #f5f7fa;
-  border-radius: 20px;
-}
-
-.user-info {
-  margin-left: 8px;
-  line-height: 1.2;
-}
-
-.user-name {
+.username {
   font-size: 14px;
-  font-weight: 500;
   color: #333;
+  margin: 0 5px;
 }
 
-.user-role {
+.dropdown-icon {
   font-size: 12px;
-  color: #8c8c8c;
+  color: #909399;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .header-center {
+    display: none;
+  }
+  
+  .header-left, .header-right {
+    padding: 0 10px;
+  }
 }
 
 :deep(.el-dropdown-menu__item.logout-item) {

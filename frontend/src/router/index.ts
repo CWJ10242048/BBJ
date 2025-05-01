@@ -180,7 +180,7 @@ router.beforeEach((to, from, next) => {
   const token = userStore.token
 
   // 设置页面标题
-  document.title = to.meta.title ? `${to.meta.title} - 备倍佳AI备课系统` : '备倍佳AI备课系统'
+  document.title = to.meta.title as string || 'AI备课系统'
 
   // 如果需要认证且没有token，重定向到登录页
   if (to.meta.requiresAuth && !token) {

@@ -5,7 +5,7 @@
                 <div class="logo-wrapper">
             <div class="logo-circle">
                 <!-- 这里放你的LOGO图片，替换src即可 -->
-                <img src="@/assets/image/BBJlogo.png" alt="logo" class="logo-img" />
+                <img src="@/assets/image/logo.png" alt="logo" class="logo-img" />
             </div>
             <div class="login-title">
                         <h1>备倍佳AI备课系统</h1>
@@ -109,7 +109,7 @@ const login = () => {
     const mockUser = {
         username: username.value || '默认用户',
         role: role.value,
-        avatar: '@/assets/image/BBJlogo.png'
+        avatar: '@/assets/image/logo.png'
     }
 
     // 存储token和用户信息
@@ -148,7 +148,7 @@ const login = () => {
     left: 0;
     width: 100%;
     height: 100%;
-    background: url('@/assets/image/BBJlogo.png') no-repeat center center;
+    background: url('@/assets/image/logo.png') no-repeat center center;
     background-size: 30%;
     opacity: 0.03;
     z-index: 0;

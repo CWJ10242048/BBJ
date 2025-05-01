@@ -1,9 +1,11 @@
 <template>
     <el-aside :width="isCollapse ? '64px' : '220px'" class="main-aside">
-        <div class="logo-container" :style="{width: isCollapse ? '63px' : '219px'}">
-            <div class="logo-wrapper">
-                <span class="app-title">AI备课</span>
-                <span class="app-subtitle">备倍佳</span>
+        <div class="logo-container" :class="{ 'logo-collapsed': isCollapse }">
+            <img src="@/assets/image/logo.png" alt="Logo" class="logo-img" v-if="!isCollapse" />
+            <img src="@/assets/image/logo.png" alt="Logo" class="logo-img-small" v-else />
+            <div class="logo-wrapper" v-if="!isCollapse">
+                <span class="app-title">备倍佳</span>
+                <span class="app-subtitle">AI备课平台</span>
             </div>
         </div>
         <el-menu
@@ -163,51 +165,85 @@ $bg-color: #e8f0f9;      // 浅蓝色背景色
 
 .main-aside {
     background-color: $bg-color;
-    height: 100vh;
+    height: 100%;
     transition: width 0.3s;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    border-right: 1px solid #e0e0e0;
 }
 
 .logo-container {
     display: flex;
     height: 60px;
     background-color: $bg-color;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     transition: width 0.3s;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 0 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.logo-collapsed {
+    justify-content: center;
+    padding: 0;
+}
+
+.logo-img {
+    height: 36px;
+    width: 36px;
+    margin-right: 10px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.logo-img-small {
+    height: 36px;
+    width: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
 }
 
 .logo-wrapper {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    margin-left: 15px;
 }
 
 .app-title {
     font-size: 16px;
     font-weight: bold;
-    color: #333;
+    color: $primary-blue;
+    line-height: 1.2;
 }
 
 .app-subtitle {
     font-size: 12px;
-    color: $primary-blue;
-    font-weight: 500;
+    color: #666;
+    line-height: 1.2;
 }
 
 .el-menu {
-    height: calc(100vh - 60px);
+    flex: 1;
     overflow-x: hidden;
     overflow-y: auto;
     border-right: none !important;
     font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
     font-weight: 500 !important;
-    padding: 10px;
+    padding: 10px 10px 0 10px;
     background-color: $bg-color !important;
+    display: flex;
+    flex-direction: column;
+    scrollbar-width: thin;  /* Firefox */
+    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;  /* Firefox */
 }
 
 .el-menu::-webkit-scrollbar {
@@ -229,7 +265,7 @@ $bg-color: #e8f0f9;      // 浅蓝色背景色
     height: 40px !important;
     line-height: 40px !important;
     color: #333 !important;
-    margin: 4px 0;
+    margin: 2px 0;
     padding-left: 20px !important;
     border-radius: 8px;
     background-color: transparent !important;
@@ -253,6 +289,10 @@ $bg-color: #e8f0f9;      // 浅蓝色背景色
 
 .menu-item {
     margin-bottom: 4px;
+}
+
+.menu-item:last-child {
+    margin-bottom: 0;
 }
 
 :deep(.el-menu--inline) {
@@ -336,20 +376,20 @@ $bg-color: #e8f0f9;      // 浅蓝色背景色
 
 // 确保折叠模式下el-icon垂直居中
 .el-menu--collapse {
-    :deep(.el-menu-item),
-    :deep(.el-sub-menu__title) {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    padding-top: 5px;
+}
+
+// 在折叠时，图标居中显示的样式
+.el-menu--collapse :deep(.el-menu-item),
+.el-menu--collapse :deep(.el-sub-menu) {
+    text-align: center;
+    position: relative;
+    
+    .el-icon {
         position: relative;
-        
-        .el-icon {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            margin: 0 !important;
-        }
+        left: 0;
+        transform: none;
+        margin: 0;
     }
 }
 
@@ -361,6 +401,21 @@ $bg-color: #e8f0f9;      // 浅蓝色背景色
     }
     
     .app-subtitle {
+        display: none;
+    }
+}
+
+.el-menu--collapse :deep(.el-sub-menu__title) {
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    & > * {
+        margin: 0;
+    }
+    
+    .el-sub-menu__icon-arrow {
         display: none;
     }
 }

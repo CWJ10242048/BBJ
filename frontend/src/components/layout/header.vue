@@ -22,7 +22,7 @@
           ></el-input>
           <el-button type="primary" class="search-btn">搜索</el-button>
         </div>
-      </div>
+        </div>
       
       <!-- 右侧用户信息和操作区 -->
       <div class="header-right">

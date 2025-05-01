@@ -383,9 +383,9 @@ $bg-color: #e8f0f9;      // 浅蓝色背景色
 .el-menu--collapse :deep(.el-menu-item),
 .el-menu--collapse :deep(.el-sub-menu) {
     text-align: center;
-    position: relative;
-    
-    .el-icon {
+        position: relative;
+        
+        .el-icon {
         position: relative;
         left: 0;
         transform: none;

@@ -11,9 +11,9 @@
               <div class="card-header">
                 <div class="header-icon">
                   <el-icon><StarFilled /></el-icon>
-                </div>
+      </div>
                 <div class="header-title">常用功能</div>
-              </div>
+    </div>
             </template>
             <div class="function-buttons-container">
               <el-button 
@@ -82,8 +82,8 @@
                 <div class="header-title">上次备课</div>
                 <div class="header-actions">
                   <el-button size="small" type="primary" plain @click="navigateTo('/history')">查看更多</el-button>
-                </div>
-              </div>
+        </div>
+      </div>
             </template>
             <div class="history-list">
               <el-empty v-if="!historyRecords.length" description="暂无备课历史记录"></el-empty>
@@ -99,8 +99,8 @@
                 <div class="history-actions">
                   <el-button type="primary" size="small" @click="viewHistoryDetail(item)">查看</el-button>
                 </div>
-              </div>
-            </div>
+        </div>
+      </div>
           </el-card>
         </div>
       </el-col>
@@ -130,7 +130,7 @@
                     <span class="progress-value">75%</span>
                   </div>
                   <el-progress :percentage="75" :stroke-width="10" :show-text="false" color="#4a8ccf"></el-progress>
-                </div>
+      </div>
 
                 <!-- 知识点掌握概况 -->
                 <div class="knowledge-section">
@@ -151,17 +151,17 @@
                         <div class="legend-color" style="background-color: #F56C6C;"></div>
                         <div class="legend-text">未掌握</div>
                         <div class="legend-value">10%</div>
-                      </div>
-                    </div>
+        </div>
+      </div>
                     <div class="knowledge-bars">
                       <div class="knowledge-bar">
                         <div class="bar-segment mastered" style="width: 68%;"></div>
                         <div class="bar-segment reviewing" style="width: 22%;"></div>
                         <div class="bar-segment unmastered" style="width: 10%;"></div>
                       </div>
-                    </div>
-                  </div>
-                </div>
+        </div>
+      </div>
+    </div>
 
                 <!-- 班级状态 -->
                 <div class="class-status">
@@ -192,8 +192,8 @@
           <!-- 通知公告模块 -->
           <el-card class="module-card notice-card">
             <template #header>
-              <div class="card-header">
-                <div class="header-icon">
+      <div class="card-header">
+        <div class="header-icon">
                   <el-icon><Bell /></el-icon>
                 </div>
                 <div class="header-title">通知公告</div>
@@ -230,25 +230,25 @@
           <el-button size="small" type="primary" plain>新建会话</el-button>
         </div>
         <div class="ai-panel-content">
-          <div class="message ai-message">
+        <div class="message ai-message">
             <p>你好！我是教学设计AI助手。你可以问我任何有关教学设计的问题，我将尽力提供帮助。例如：</p>
-            <ul>
-              <li>请帮我设计一节语文课的教学大纲</li>
-              <li>如何制作互动性强的教学课件？</li>
-              <li>二年级学生的认知特点是什么？</li>
-            </ul>
-          </div>
+          <ul>
+            <li>请帮我设计一节语文课的教学大纲</li>
+            <li>如何制作互动性强的教学课件？</li>
+            <li>二年级学生的认知特点是什么？</li>
+          </ul>
         </div>
+      </div>
         <div class="ai-panel-input">
-          <el-input 
-            v-model="prompt" 
-            type="textarea" 
-            rows="2" 
-            placeholder="想问什么？在这里输入您的问题..."
-            resize="none"
-          ></el-input>
+        <el-input 
+          v-model="prompt" 
+          type="textarea" 
+          rows="2" 
+          placeholder="想问什么？在这里输入您的问题..."
+          resize="none"
+        ></el-input>
           <div class="ai-panel-actions">
-            <el-button type="primary" :disabled="!prompt">发送</el-button>
+          <el-button type="primary" :disabled="!prompt">发送</el-button>
           </div>
         </div>
       </div>

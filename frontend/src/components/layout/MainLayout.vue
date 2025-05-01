@@ -42,7 +42,7 @@ watch(sidebarCollapsed, (newValue) => {
 
 .main-container {
   flex-direction: column;
-  overflow: hidden; 
+  overflow: hidden;
   flex: 1;
   padding: 0;
   margin: 0;

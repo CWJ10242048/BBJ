@@ -119,10 +119,6 @@ const router = createRouter({
             {
               path: 'community',
               component: () => import('../views/ResourceLib/Community.vue')
-            },
-            {
-              path: 'concept',
-              component: () => import('../views/ResourceLib/Concept.vue')
             }
           ]
         },

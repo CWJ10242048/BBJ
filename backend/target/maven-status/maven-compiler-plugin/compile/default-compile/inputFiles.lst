@@ -1,6 +1,15 @@
-D:\computer design\BBJ\backend\src\main\java\com\bbj\entity\HistoryRecord.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\entity\User.java
 D:\computer design\BBJ\backend\src\main\java\com\bbj\repository\HistoryRecordRepository.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\repository\UserRepository.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\dto\UserDTO.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\service\UserService.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\controller\HistoryController.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\config\SecurityConfig.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\dto\PasswordUpdateRequest.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\entity\HistoryRecord.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\dto\UserUpdateRequest.java
 D:\computer design\BBJ\backend\src\main\java\com\bbj\config\WebConfig.java
 D:\computer design\BBJ\backend\src\main\java\com\bbj\BBJApplication.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\service\impl\UserServiceImpl.java
+D:\computer design\BBJ\backend\src\main\java\com\bbj\controller\UserController.java
 D:\computer design\BBJ\backend\src\main\java\com\bbj\controller\FileController.java
-D:\computer design\BBJ\backend\src\main\java\com\bbj\controller\HistoryController.java

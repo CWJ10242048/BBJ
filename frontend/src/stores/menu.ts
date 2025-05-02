@@ -53,8 +53,7 @@ export const useMenuStore = defineStore('menu', {
         menuType: 0,
         child: [
           { menuName: '知识图谱', routeUrl: '/resource-lib/graph', icon: 'el-icon-share', menuType: 1 },
-          { menuName: '资源社区', routeUrl: '/resource-lib/community', icon: 'el-icon-user', menuType: 1 },
-          { menuName: '概念先决识别', routeUrl: '/resource-lib/concept', icon: 'el-icon-search', menuType: 1 }
+          { menuName: '资源社区', routeUrl: '/resource-lib/community', icon: 'el-icon-user', menuType: 1 }
         ]
       },
       // 其它一级菜单

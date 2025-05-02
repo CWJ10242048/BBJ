@@ -1467,7 +1467,7 @@ const searchBookByISBN = async () => {
       author: '周志华',
       publisher: '清华大学出版社',
       publishYear: '2016',
-      cover: '/src/assets/image/machine_learning.png'
+      cover: new URL('@/assets/image/machine_learning.png', import.meta.url).href
     }
     selectedBook.value = '机器学习'
     ElMessage.success('书籍信息获取成功')
@@ -1504,22 +1504,22 @@ const recommendedBooks = ref([
   {
     title: '机器学习',
     author: '周志华',
-    cover: '/src/assets/image/machine_learning.png'
+    cover: new URL('@/assets/image/machine_learning.png', import.meta.url).href
   },
   {
     title: '深度学习',
     author: 'Ian Goodfellow',
-    cover: '/src/assets/image/deep_learning.png'
+    cover: new URL('@/assets/image/machine_learning.png', import.meta.url).href
   },
   {
     title: '人工智能：一种现代方法',
     author: 'Stuart Russell',
-    cover: '/src/assets/image/ai_modern.png'
+    cover: new URL('@/assets/image/machine_learning.png', import.meta.url).href
   },
   {
     title: '统计学习方法',
     author: '李航',
-    cover: '/src/assets/image/statistical_learning.png'
+    cover: new URL('@/assets/image/machine_learning.png', import.meta.url).href
   }
 ])
 

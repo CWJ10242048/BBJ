@@ -1,0 +1,1 @@
+import{u as t,$ as s,b as _,o as n,c as r,f as a}from"./index-8f7409db.js";import{_ as c}from"./_plugin-vue_export-helper-c27b6911.js";const p={class:"index-container"},u={__name:"index",setup(d){const e=t();return s(()=>{e.push("/home")}),(i,m)=>{const o=_("router-view");return n(),r("div",p,[a(o)])}}},v=c(u,[["__scopeId","data-v-7a0b97e9"]]);export{v as default};

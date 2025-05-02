@@ -1,11 +1,12 @@
 import type { UserInfo } from '@/types/user';
+import lockBackImg from '@/assets/image/lock-back.jpg';
 
 // 模拟用户数据
 export const mockUserInfo: UserInfo = {
   id: 1,
   username: 'teacher',
   nickname: '李老师',
-  avatarUrl: '/src/assets/image/lock-back.jpg',
+  avatarUrl: lockBackImg,
   phone: '13800000000',
   email: 'Mrsli@example.com',
   school: '计算机科学大学',

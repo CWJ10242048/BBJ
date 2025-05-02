@@ -1,0 +1,189 @@
+2025-05-02 22:38:45 [main] INFO  com.bbj.BBJApplication - Starting BBJApplication v1.0-SNAPSHOT using Java 11.0.27 on LAPTOP-AQGE9FTC with PID 24400 (D:\computer design\BBJ\backend\target\bbj-1.0-SNAPSHOT.jar started by Lenovo in D:\computer design\BBJ\backend)
+2025-05-02 22:38:45 [main] INFO  com.bbj.BBJApplication - The following 1 profile is active: "prod"
+2025-05-02 22:38:46 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-02 22:38:46 [main] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 34 ms. Found 2 JPA repository interfaces.
+2025-05-02 22:38:47 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port(s): 8081 (http)
+2025-05-02 22:38:47 [main] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2025-05-02 22:38:47 [main] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/9.0.63]
+2025-05-02 22:38:47 [main] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-05-02 22:38:47 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1570 ms
+2025-05-02 22:38:47 [main] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-05-02 22:38:47 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 5.6.9.Final
+2025-05-02 22:38:47 [main] INFO  o.h.annotations.common.Version - HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2025-05-02 22:38:47 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-05-02 22:38:48 [main] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-05-02 22:38:48 [main] INFO  org.hibernate.dialect.Dialect - HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+2025-05-02 22:38:48 [main] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2025-05-02 22:38:48 [main] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-02 22:38:49 [main] WARN  o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: e75e0e15-c0fc-41c2-a1eb-bdb95b0a380f
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-05-02 22:38:49 [main] INFO  o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@6504a875, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@35e26d05, org.springframework.security.web.context.SecurityContextPersistenceFilter@1f1e58ca, org.springframework.security.web.header.HeaderWriterFilter@4fa822ad, org.springframework.web.filter.CorsFilter@29fa6b65, org.springframework.security.web.authentication.logout.LogoutFilter@37c41ec0, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@3ed34ef5, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@2d5ef498, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@7c72ecc, org.springframework.security.web.session.SessionManagementFilter@303f1234, org.springframework.security.web.access.ExceptionTranslationFilter@3662bdff, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@288f173f]
+2025-05-02 22:38:49 [main] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port(s): 8081 (http) with context path ''
+2025-05-02 22:38:49 [main] INFO  com.bbj.BBJApplication - Started BBJApplication in 4.112 seconds (JVM running for 4.443)
+2025-05-02 22:39:24 [http-nio-8081-exec-1] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-05-02 22:39:24 [http-nio-8081-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-05-02 22:39:24 [http-nio-8081-exec-1] INFO  o.s.web.servlet.DispatcherServlet - Completed initialization in 2 ms
+2025-05-02 22:39:24 [http-nio-8081-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 22:49:28 [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 22:49:44 [http-nio-8081-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 22:50:07 [http-nio-8081-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 22:50:33 [http-nio-8081-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 22:58:40 [http-nio-8081-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 22:59:21 [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 23:09:05 [http-nio-8081-exec-5] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 23:09:05 [http-nio-8081-exec-6] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 23:09:15 [http-nio-8081-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 23:09:15 [http-nio-8081-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 23:09:28 [http-nio-8081-exec-9] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 23:09:28 [http-nio-8081-exec-10] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 23:09:31 [http-nio-8081-exec-1] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 23:09:31 [http-nio-8081-exec-3] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC
+2025-05-02 23:09:36 [http-nio-8081-exec-2] DEBUG org.hibernate.SQL - 
+    select
+        historyrec0_.id as id1_0_,
+        historyrec0_.content as content2_0_,
+        historyrec0_.time as time3_0_,
+        historyrec0_.type as type4_0_ 
+    from
+        history_records historyrec0_ 
+    order by
+        historyrec0_.time DESC

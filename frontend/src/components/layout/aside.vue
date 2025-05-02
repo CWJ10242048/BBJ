@@ -17,66 +17,85 @@
             background-color="#e8f0f9"
             text-color="#333333"
             active-text-color="#ffffff"
+            :popper-effect="isCollapse ? 'light' : ''"
+            menu-trigger="hover"
             router>
             <el-menu-item index="/home" class="menu-item">
                 <el-icon><HomeFilled /></el-icon>
                 <span>首页</span>
             </el-menu-item>
             
-            <el-menu-item index="/teaching-design/syllabus" class="menu-item">
-                <el-icon><Document /></el-icon>
-                <span>教学大纲设计</span>
-            </el-menu-item>
+            <el-sub-menu index="/teaching-design" popper-class="custom-popper">
+                <template #title>
+                    <el-icon><Document /></el-icon>
+                    <span>教学设计</span>
+                </template>
+                <el-menu-item index="/teaching-design/syllabus" class="menu-item">
+                    <img src="@/assets/logo/syllabus.svg" class="menu-icon" />
+                    <span>教学大纲设计</span>
+                </el-menu-item>
+                <el-menu-item index="/teaching-design/plan" class="menu-item">
+                    <el-icon><EditPen /></el-icon>
+                    <span>教案生成</span>
+                </el-menu-item>
+                <el-menu-item index="/teaching-design/interaction" class="menu-item">
+                    <el-icon><ChatDotRound /></el-icon>
+                    <span>互动环节设计</span>
+                </el-menu-item>
+            </el-sub-menu>
             
-            <el-menu-item index="/teaching-design/plan" class="menu-item">
-                <el-icon><EditPen /></el-icon>
-                <span>教案生成</span>
-            </el-menu-item>
+            <el-sub-menu index="/resource-gen" popper-class="custom-popper">
+                <template #title>
+                    <el-icon><Picture /></el-icon>
+                    <span>教学资源</span>
+                </template>
+                <el-menu-item index="/resource-gen/ppt" class="menu-item">
+                    <img src="@/assets/logo/ppt.svg" class="menu-icon" />
+                    <span>PPT生成</span>
+                </el-menu-item>
+                <el-menu-item index="/resource-gen/graphic" class="menu-item">
+                    <img src="@/assets/logo/graphic.svg" class="menu-icon" />
+                    <span>资源生成</span>
+                </el-menu-item>
+                <el-menu-item index="/resource-gen/question" class="menu-item">
+                    <el-icon><QuestionFilled /></el-icon>
+                    <span>智能出题</span>
+                </el-menu-item>
+            </el-sub-menu>
             
-            <el-menu-item index="/teaching-design/interaction" class="menu-item">
-                <el-icon><ChatDotRound /></el-icon>
-                <span>互动环节设计</span>
-            </el-menu-item>
+            <el-sub-menu index="/analysis" popper-class="custom-popper">
+                <template #title>
+                    <el-icon><DataLine /></el-icon>
+                    <span>学情分析</span>
+                </template>
+                <el-menu-item index="/analysis/student-board" class="menu-item">
+                    <el-icon><Histogram /></el-icon>
+                    <span>学生数据看板</span>
+                </el-menu-item>
+                <el-menu-item index="/analysis/cognition" class="menu-item">
+                    <img src="@/assets/logo/cognition.svg" class="menu-icon" />
+                    <span>认知诊断</span>
+                </el-menu-item>
+                <el-menu-item index="/analysis/knowledge-track" class="menu-item">
+                    <img src="@/assets/logo/knowledge-track.svg" class="menu-icon" />
+                    <span>知识追踪</span>
+                </el-menu-item>
+            </el-sub-menu>
             
-            <el-menu-item index="/resource-gen/ppt" class="menu-item">
-                <el-icon><PictureFilled /></el-icon>
-                <span>PPT生成</span>
-            </el-menu-item>
-            
-            <el-menu-item index="/resource-gen/graphic" class="menu-item">
-                <el-icon><Picture /></el-icon>
-                <span>资源生成</span>
-            </el-menu-item>
-            
-            <el-menu-item index="/resource-gen/question" class="menu-item">
-                <el-icon><QuestionFilled /></el-icon>
-                <span>智能出题</span>
-            </el-menu-item>
-            
-            <el-menu-item index="/analysis/student-board" class="menu-item">
-                <el-icon><Histogram /></el-icon>
-                <span>学生数据看板</span>
-            </el-menu-item>
-            
-            <el-menu-item index="/analysis/cognition" class="menu-item">
-                <el-icon><DataLine /></el-icon>
-                <span>认知诊断</span>
-            </el-menu-item>
-            
-            <el-menu-item index="/analysis/knowledge-track" class="menu-item">
-                <el-icon><TrendCharts /></el-icon>
-                <span>知识追踪</span>
-            </el-menu-item>
-            
-            <el-menu-item index="/resource-lib/graph" class="menu-item">
-                <el-icon><Share /></el-icon>
-                <span>知识图谱</span>
-            </el-menu-item>
-            
-            <el-menu-item index="/resource-lib/community" class="menu-item">
-                <el-icon><UserFilled /></el-icon>
-                <span>资源社区</span>
-            </el-menu-item>
+            <el-sub-menu index="/resource-lib" popper-class="custom-popper">
+                <template #title>
+                    <el-icon><Collection /></el-icon>
+                    <span>资源库</span>
+                </template>
+                <el-menu-item index="/resource-lib/graph" class="menu-item">
+                    <el-icon><Share /></el-icon>
+                    <span>知识图谱</span>
+                </el-menu-item>
+                <el-menu-item index="/resource-lib/community" class="menu-item">
+                    <img src="@/assets/logo/community.svg" class="menu-icon" />
+                    <span>资源社区</span>
+                </el-menu-item>
+            </el-sub-menu>
             
             <el-menu-item index="/personalized" class="menu-item">
                 <el-icon><MagicStick /></el-icon>
@@ -89,7 +108,7 @@
             </el-menu-item>
             
             <el-menu-item index="/history" class="menu-item">
-                <el-icon><Notebook /></el-icon>
+                <img src="@/assets/logo/history.svg" class="menu-icon" />
                 <span>输出历史</span>
             </el-menu-item>
             
@@ -99,7 +118,7 @@
             </el-menu-item>
             
             <el-menu-item index="/profile" class="menu-item">
-                <el-icon><User /></el-icon>
+                <img src="@/assets/logo/profile.svg" class="menu-icon" />
                 <span>个人中心</span>
             </el-menu-item>
         </el-menu>
@@ -127,7 +146,8 @@ import {
     Monitor,
     Notebook,
     Service,
-    User
+    User,
+    Collection
 } from '@element-plus/icons-vue'
 
 // 接收折叠状态作为props
@@ -156,6 +176,19 @@ $darker-blue: #3a78b5;   // 更淡的深蓝色，原先是#164785
 $white: #ffffff;         // 白色文字
 $hover-bg: #5998da;      // 更淡的悬停背景色，原先是#2a6fd1
 $bg-color: #e8f0f9;      // 浅蓝色背景色
+
+// 强制隐藏折叠状态下的箭头
+:deep(.el-menu--collapse .el-sub-menu .el-sub-menu__icon-arrow) {
+    display: none !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    pointer-events: none !important;
+}
+
+// 删除通用的箭头隐藏样式，允许非折叠状态下显示箭头
 
 .main-aside {
     background-color: $bg-color;
@@ -187,6 +220,7 @@ $bg-color: #e8f0f9;      // 浅蓝色背景色
 .logo-collapsed {
     justify-content: center;
     padding: 0;
+    width: 64px !important;
 }
 
 .logo-img {
@@ -310,92 +344,131 @@ $bg-color: #e8f0f9;      // 浅蓝色背景色
 }
 
 :deep(.el-sub-menu__title) {
+    height: 40px !important;
+    line-height: 40px !important;
+    color: #333 !important;
+    margin: 2px 0;
     padding-left: 20px !important;
+    border-radius: 8px;
+    background-color: transparent !important;
+    position: relative;
+    
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.6) !important;
+        color: $primary-blue !important;
+    }
+    
+    // 添加下拉箭头样式
+    .el-sub-menu__icon-arrow {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        position: absolute;
+        right: 20px;
+        margin-top: -7px;
+        transition: transform 0.3s;
+        font-size: 12px;
+        color: #333 !important;
+    }
 }
 
 :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
-    color: #333 !important;
+    color: $primary-blue !important;
 }
 
+// 统一图标样式
 :deep(.el-icon) {
     color: #333 !important;
     margin-right: 10px !important;
+    font-size: 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-:deep(.el-menu-item.is-active .el-icon) {
+.menu-icon {
+    width: 20px !important;
+    height: 20px !important;
+    margin-right: 10px !important;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+:deep(.el-menu-item.is-active .el-icon),
+:deep(.el-menu-item.is-active .menu-icon) {
     color: $white !important;
+    filter: brightness(0) invert(1);
 }
 
-// 折叠时图标居中
-.el-menu--collapse :deep(.el-sub-menu__title), 
-.el-menu--collapse :deep(.el-menu-item) {
-    padding: 0 !important;
-    text-align: center;
-    justify-content: center;
-    margin-left: 0 !important;
+// 确保菜单项内容垂直居中
+:deep(.el-menu-item) {
+    display: flex !important;
+    align-items: center !important;
     
-    .el-icon {
-        margin: 0 !important;
+    .el-icon,
+    .menu-icon {
+        flex-shrink: 0;
     }
     
     span {
-        display: none;
+        flex: 1;
     }
 }
 
-// 修复折叠时子菜单图标不居中问题
-.el-menu--collapse :deep(.el-sub-menu) {
-    & > .el-sub-menu__title {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 0 !important;
-        
-        & > * {
-            margin: 0 !important;
-        }
-        
-        .el-sub-menu__icon-arrow {
-            display: none;
-        }
-    }
-}
-
-// 确保图标垂直居中对齐
-:deep(.el-menu-item), 
-:deep(.el-sub-menu__title) {
-    display: flex;
-    align-items: center;
-}
-
-// 确保折叠模式下el-icon垂直居中
+// 折叠时的图标样式
 .el-menu--collapse {
-    padding-top: 5px;
-}
-
-// 在折叠时，图标居中显示的样式
-.el-menu--collapse :deep(.el-menu-item),
-.el-menu--collapse :deep(.el-sub-menu) {
-    text-align: center;
-        position: relative;
+    // 所有菜单项和子菜单标题
+    :deep(.el-menu-item), 
+    :deep(.el-sub-menu__title) {
+        height: 40px !important;
+        padding: 0 !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        text-align: center;
         
-        .el-icon {
-        position: relative;
-        left: 0;
-        transform: none;
-        margin: 0;
+        .el-icon, .menu-icon {
+            margin: 0 !important;
+            display: block !important;
+            width: 20px !important;
+            height: 20px !important;
+        }
+        
+        span {
+            display: none !important;
+        }
+        
+        // 确保折叠时完全隐藏箭头图标
+        .el-sub-menu__icon-arrow {
+            display: none !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
     }
+    
+    // 隐藏所有箭头
+    :deep(.el-sub-menu__icon-arrow) {
+        display: none !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    
+    // 隐藏内联菜单
+    :deep(.el-menu--inline) {
+        display: none !important;
+    }
+    
+    width: 64px !important;
 }
 
 // 折叠时标题处理
 .el-menu--collapse + .logo-container {
     .logo-wrapper {
-        margin-left: 0;
-        align-items: center;
-    }
-    
-    .app-subtitle {
-        display: none;
+        display: none !important;
     }
 }
 
@@ -410,7 +483,68 @@ $bg-color: #e8f0f9;      // 浅蓝色背景色
     }
     
     .el-sub-menu__icon-arrow {
-        display: none;
+        display: none !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
     }
+}
+
+// 折叠菜单下的弹出子菜单样式
+:deep(.el-menu--popup) {
+    min-width: 180px;
+    margin-left: 5px;
+    background-color: white !important;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    
+    .el-menu-item {
+        padding-left: 20px !important;
+        height: 40px !important;
+        line-height: 40px !important;
+        
+        &.is-active {
+            background-color: $primary-blue !important;
+            color: $white !important;
+        }
+        
+        &:hover {
+            background-color: rgba(74, 140, 207, 0.1) !important;
+            color: $primary-blue !important;
+        }
+    }
+}
+
+// 折叠时弹出菜单的箭头隐藏
+:deep(.el-popper .el-sub-menu__icon-arrow) {
+    display: none !important;
+}
+
+// 添加回内联菜单的样式
+:deep(.el-menu--inline) {
+    background-color: transparent !important;
+    padding-left: 10px;
+}
+
+:deep(.el-menu--inline .el-menu-item) {
+    min-width: auto;
+    background-color: transparent !important;
+    
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.6) !important;
+        color: $primary-blue !important;
+    }
+    
+    &.is-active {
+        background-color: $primary-blue !important;
+        color: $white !important;
+    }
+}
+
+// 修改全局覆盖样式，允许非折叠状态下显示箭头
+:global(.custom-popper .el-sub-menu__icon-arrow) {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
 </style>

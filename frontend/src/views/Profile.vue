@@ -199,13 +199,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { User, EditPen, Lock, Phone, Message, School } from '@element-plus/icons-vue'
 import { userApi } from '@/api/user'
 import type { UserInfo, UserUpdateRequest } from '@/types/user'
 import type { FormInstance } from 'element-plus'
 import { mockUserInfo, mockApiResponse } from '@/api/mock'
+import lockBackImg from '@/assets/image/lock-back.jpg'
 
 const formRef = ref<FormInstance>()
 const pwdFormRef = ref<FormInstance>()
@@ -315,7 +316,7 @@ const getUserInfo = async () => {
     form.value = {
       ...userData,
       // 如果返回的头像URL为空，使用默认头像
-      avatarUrl: userData.avatarUrl || '/src/assets/image/lock-back.jpg'
+      avatarUrl: userData.avatarUrl || lockBackImg
     }
     
     saveLoading.value = false
@@ -329,7 +330,7 @@ const getUserInfo = async () => {
       id: 0,
       username: 'teacher',
       nickname: '李老师',
-      avatarUrl: '/src/assets/image/lock-back.jpg',
+      avatarUrl: lockBackImg,
       phone: '13800000000',
       email: 'Mrsli@example.com',
       school: '计算机科学大学',

@@ -1,0 +1,1 @@
+import{_ as o}from"./_plugin-vue_export-helper-c27b6911.js";import{b as _,o as t,q as n}from"./index-8f7409db.js";const r={};function c(s,a){const e=_("router-view");return t(),n(e)}const i=o(r,[["render",c],["__scopeId","data-v-e39108e4"]]);export{i as default};

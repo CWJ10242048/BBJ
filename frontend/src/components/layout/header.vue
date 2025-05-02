@@ -35,7 +35,7 @@
         <div class="user-profile">
           <el-dropdown trigger="click" @command="handleCommand">
             <div class="avatar-container">
-              <el-avatar :size="36" src="/src/assets/image/lock-back.jpg" />
+              <el-avatar :size="36" :src="lockBackImg" />
               <span class="username">李老师</span>
               <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
             </div>
@@ -78,6 +78,7 @@ import {
   ArrowDown,
   User
 } from '@element-plus/icons-vue'
+import lockBackImg from '@/assets/image/lock-back.jpg'
 
 // 定义emit
 const emit = defineEmits(['toggle-collapse'])

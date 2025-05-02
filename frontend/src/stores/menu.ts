@@ -31,7 +31,7 @@ export const useMenuStore = defineStore('menu', {
         menuType: 0,
         child: [
           { menuName: 'PPT生成', routeUrl: '/resource-gen/ppt', icon: 'el-icon-files', menuType: 1 },
-          { menuName: '图文生成', routeUrl: '/resource-gen/graphic', icon: 'el-icon-picture', menuType: 1 },
+          { menuName: '资源生成', routeUrl: '/resource-gen/graphic', icon: 'el-icon-picture', menuType: 1 },
           { menuName: '智能出题', routeUrl: '/resource-gen/question', icon: 'el-icon-edit-outline', menuType: 1 }
         ]
       },

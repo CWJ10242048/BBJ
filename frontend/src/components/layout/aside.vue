@@ -45,7 +45,7 @@
             
             <el-menu-item index="/resource-gen/graphic" class="menu-item">
                 <el-icon><Picture /></el-icon>
-                <span>图文生成</span>
+                <span>资源生成</span>
             </el-menu-item>
             
             <el-menu-item index="/resource-gen/question" class="menu-item">

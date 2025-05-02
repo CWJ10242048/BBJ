@@ -120,9 +120,11 @@ const currentMenuInfo = computed(() => {
     '/teaching-design/interaction': '互动环节设计',
     
     // 教学资源生成子路径
+    '/resource-gen/lesson-plan': '教案生成',
     '/resource-gen/ppt': 'PPT生成',
-    '/resource-gen/graphic': '图文生成',
-    '/resource-gen/question': '智能出题',
+    '/resource-gen/graphic': '资源生成',
+    '/resource-gen/exercise': '习题生成',
+    '/user-manage': '用户管理',
     
     // 学情分析子路径
     '/analysis/student-board': '学生数据看板',

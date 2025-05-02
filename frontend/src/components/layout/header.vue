@@ -133,8 +133,7 @@ const currentMenuInfo = computed(() => {
     
     // 资源库子路径
     '/resource-lib/graph': '知识图谱',
-    '/resource-lib/community': '资源社区',
-    '/resource-lib/concept': '概念先决识别'
+    '/resource-lib/community': '资源社区'
   }
   
   // 首先检查是否是完整路径匹配

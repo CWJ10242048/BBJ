@@ -78,11 +78,6 @@
                 <span>资源社区</span>
             </el-menu-item>
             
-            <el-menu-item index="/resource-lib/concept" class="menu-item">
-                <el-icon><Connection /></el-icon>
-                <span>概念先决识别</span>
-            </el-menu-item>
-            
             <el-menu-item index="/personalized" class="menu-item">
                 <el-icon><MagicStick /></el-icon>
                 <span>一键个性化备课</span>
@@ -128,7 +123,6 @@ import {
     TrendCharts,
     Share,
     UserFilled,
-    Connection,
     MagicStick,
     Monitor,
     Notebook,

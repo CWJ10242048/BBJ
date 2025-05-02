@@ -1388,9 +1388,9 @@ const handleSaveStageDetails = () => {
 .edit-button {
   width: auto;
   min-width: 180px;
-  display: block;
-  margin: 0 35% 0 auto;
-  text-align: center;
+  display: flex;
+  margin: 0 auto;
+  justify-content: center;
 }
 
 .edit-form {

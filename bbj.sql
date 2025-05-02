@@ -64,4 +64,33 @@ INSERT INTO `history_records` VALUES (28, '《大数据分析教程》教案生�
 INSERT INTO `history_records` VALUES (29, '《区块链技术PPT》生成，讲解智能合约与加密技术。', 'PPT', '2025-01-15 12:10:00');
 INSERT INTO `history_records` VALUES (30, '《深度学习基础习题集》已生成，含常见算法与应用。', '习题', '2025-01-15 12:20:00');
 
+-- ----------------------------
+-- Table structure for users
+-- ----------------------------
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `nickname` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `avatar_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `school` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `subject` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `last_login_at` timestamp NULL DEFAULT NULL,
+  `role` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'USER',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `username_unique`(`username` ASC) USING BTREE,
+  UNIQUE INDEX `email_unique`(`email` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of users
+-- ----------------------------
+INSERT INTO `users` VALUES (1, 'admin', '$2a$10$KQpNRX6GsT8VZHRr.YmbYuDxdJJ1Vry7jy.mXkhXS11TzzN1hMXNK', '李老师', 'https://pic4.zhimg.com/80/v2-3dbd399559982ab3e3e0e5d621268c12_720w.webp', '13800000000', 'admin@example.com', '计算机科学大学', 'computer_science', '2023-04-01 10:00:00', '2023-04-01 10:00:00', '2023-04-01 10:00:00', 'ADMIN');
+INSERT INTO `users` VALUES (2, 'teacher', '$2a$10$KQpNRX6GsT8VZHRr.YmbYuDxdJJ1Vry7jy.mXkhXS11TzzN1hMXNK', '张老师', 'https://pic1.zhimg.com/80/v2-d1a96aac1a7778cfe98a98b3fdba39cf_720w.webp', '13900000000', 'teacher@example.com', '计算机科学大学', 'programming', '2023-04-01 11:00:00', '2023-04-01 11:00:00', '2023-04-01 11:00:00', 'USER');
+
 SET FOREIGN_KEY_CHECKS = 1;

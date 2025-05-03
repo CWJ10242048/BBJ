@@ -103,7 +103,7 @@
             class="upload-demo"
             :auto-upload="false"
             :show-file-list="true"
-            :on-change="file => handleFileChange(file, 'image')"
+            :on-change="handleFileChange"
             accept=".jpg,.jpeg,.png,.svg,.bmp,.gif,.webp"
           >
             <el-button size="small" type="primary">上传图片</el-button>
@@ -216,20 +216,68 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, defineEmits, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, type UploadUserFile, type UploadFile, type FormInstance, type FormItemRule, type UploadProps, type FormRules } from 'element-plus'
 import axios from 'axios'
+import { MagicStick } from '@element-plus/icons-vue'
 
 // Define emit function (generate might not be needed if standalone only, but keep for now)
 const emit = defineEmits(['generate', 'cancel'])
 
+// --- Interfaces ---
+interface Stage {
+  id: string;
+  name: string;
+  time: number;
+  desc: string;
+}
+
+interface PlanContent {
+  title: string;
+  usage: string;
+  syllabus: string;
+  subject: string;
+  stages: Stage[];
+  reference: string;
+  remark: string;
+}
+
+interface HistoryPlan {
+  id: string;
+  name: string;
+  type: string;
+  time: string;
+  content: PlanContent;
+}
+
+interface FormState {
+  resourceType: 'image' | 'video';
+  subject: string;
+  knowledge: string;
+  custom: string;
+  imageType: string[];
+  size: string;
+  customWidth: number;
+  customHeight: number;
+  imageStyle: string[];
+  imageFile: UploadUserFile[];
+  imageDesc: string;
+  videoDuration: number;
+  videoAspectRatio: string;
+  videoStyle: string[];
+  videoScript: string;
+}
+
+type TagType = 'success' | 'info' | 'warning' | 'danger' | 'primary';
+
 // Refs
-const formRef = ref()
+const formRef = ref<FormInstance>()
 const previewVisible = ref(false)
 const exporting = ref(false)
-const isAiFilling = ref(false) 
+const isAiFilling = ref(false)
+const isTyping = ref(false);
 
-// --- Teaching content selection state --- 
-const historyPlans = ref([
+// --- Teaching content selection state ---
+const historyPlans = ref<HistoryPlan[]>([
   {
     id: 'plan1',
     name: '机器学习线性回归教案',
@@ -239,7 +287,7 @@ const historyPlans = ref([
       title: '机器学习线性回归',
       usage: '第4章',
       syllabus: '机器学习课程教学大纲',
-      subject: '计算机科学', 
+      subject: '计算机科学',
       stages: [
         { id: 'stage1', name: '复习旧知', time: 10, desc: '回顾上节课概念: 线性模型, 假设函数 h(x) = θ₀ + θ₁x' },
         { id: 'stage2', name: '导入新课', time: 15, desc: '通过房价预测案例(面积 vs 价格)引入线性回归问题' },
@@ -254,17 +302,17 @@ const historyPlans = ref([
   // ... more plans
 ]);
 
-const selectedPlanId = ref(null) 
-const selectedPlanStructure = ref(null) 
-const selectedStageId = ref(null) 
+const selectedPlanId = ref<string>('')
+const selectedPlanStructure = ref<PlanContent | null>(null)
+const selectedStageId = ref<string>('')
 
-// --- Computed: Stage options --- 
+// --- Computed: Stage options ---
 const stageOptions = computed(() => {
   return selectedPlanStructure.value?.stages || []
 })
 
-// --- Form state and rules --- 
-const form = ref({
+// --- Form state and rules ---
+const form = ref<FormState>({
   resourceType: 'image',
   subject: '',
   knowledge: '',
@@ -284,35 +332,35 @@ const form = ref({
   videoScript: ''
 })
 
-const rules = computed(() => ({
+const rules = computed((): FormRules => ({
   resourceType: [{ required: true, message: '请选择资源类型', trigger: 'change' }],
   subject: [{ required: true, message: '请输入适用学科', trigger: 'blur' }],
   knowledge: [{ required: true, message: '请输入知识点', trigger: 'blur' }],
-  imageType: [{ required: form.value.resourceType === 'image', message: '请选择图片类型', trigger: 'change', type: 'array' }],
+  imageType: [{ required: form.value.resourceType === 'image', message: '请选择图片类型', trigger: 'change' }],
   size: [{ required: form.value.resourceType === 'image', message: '请选择图片大小', trigger: 'change' }],
-  imageStyle: [{ required: form.value.resourceType === 'image', message: '请选择风格', trigger: 'change', type: 'array' }],
+  imageStyle: [{ required: form.value.resourceType === 'image', message: '请选择风格', trigger: 'change' }],
   videoDuration: [{ required: form.value.resourceType === 'video', message: '请输入视频时长', trigger: 'blur', type: 'number' }],
   videoAspectRatio: [{ required: form.value.resourceType === 'video', message: '请选择画面比例', trigger: 'change' }],
-  videoStyle: [{ required: form.value.resourceType === 'video', message: '请选择视频风格', trigger: 'change', type: 'array' }],
+  videoStyle: [{ required: form.value.resourceType === 'video', message: '请选择视频风格', trigger: 'change' }],
   videoScript: [{ required: form.value.resourceType === 'video', message: '请输入脚本/提示词', trigger: 'blur' }],
 }))
 
-// --- Lifecycle --- 
+// --- Lifecycle ---
 onMounted(() => {
   console.log("[Graphic.vue] Mounted in standalone mode.");
   // fetchHistoryPlans(); // No need to call this if using static data above
 });
 
-// --- Add helper functions from PPT.vue --- 
-const getRecordTypeTag = (type: string) => {
-  const typeMap: Record<string, string> = {
+// --- Add helper functions from PPT.vue ---
+const getRecordTypeTag = (type: string): TagType | undefined => {
+  const typeMap: Record<string, TagType> = {
     '教案': 'success',
     'PPT': 'warning',
     '习题': 'danger',
     '教学大纲': 'info',
     '资源': 'primary'
   }
-  return typeMap[type] || ''
+  return typeMap[type]
 }
 
 const formatDate = (dateString: string) => {
@@ -331,7 +379,6 @@ const formatDate = (dateString: string) => {
     return dateString; // Return original string if formatting fails
   }
 }
-// --- End helper functions ---
 
 // --- Standalone mode functions (Keep these) ---
 
@@ -339,8 +386,8 @@ const formatDate = (dateString: string) => {
 // const fetchHistoryPlans = async () => { ... }
 
 // Handle Plan Change (Keep this)
-const handlePlanChange = (planId) => {
-  selectedStageId.value = null;
+const handlePlanChange = (planId: string | number) => {
+  selectedStageId.value = '';
   form.value.knowledge = '';
   form.value.imageDesc = '';
   form.value.videoScript = '';
@@ -356,8 +403,8 @@ const handlePlanChange = (planId) => {
 }
 
 // Handle Stage Change (Keep this)
-const handleStageChange = (stageId) => {
-  const stage = selectedPlanStructure.value?.stages.find(s => s.id === stageId);
+const handleStageChange = (stageId: string | number) => {
+  const stage = selectedPlanStructure.value?.stages.find((s: Stage) => s.id === stageId);
   
   if (stage) {
     form.value.knowledge = stage.name;
@@ -376,14 +423,14 @@ const sizeText = computed(() => {
   if (form.value.size) return form.value.size
   return ''
 })
-const handleSizeChange = val => {
+const handleSizeChange = (val: string) => {
   if (val !== 'custom') {
     form.value.customWidth = 800
     form.value.customHeight = 600
   }
 }
-const handleFileChange = (file, type) => {
-  if (type === 'image') form.value.imageFile = file.fileList
+const handleFileChange: UploadProps['onChange'] = (uploadFile: UploadFile, uploadFiles: UploadUserFile[]) => {
+  form.value.imageFile = uploadFiles;
 }
 const handleSave = async () => {
   if (!formRef.value) return
@@ -446,7 +493,7 @@ const handleSave = async () => {
 const handlePreview = async () => {
   if (!formRef.value) return;
   try {
-    await formRef.value.validate().catch(err => {
+    await formRef.value.validate().catch((err: any) => {
       console.warn('预览前表单校验未通过:', err)
       ElMessage.warning('表单部分内容不符合要求，仅预览当前已填写信息')
     })
@@ -476,9 +523,9 @@ const handleExport = async () => {
 }
 const handleReset = () => {
   // 重置教学内容选择
-  selectedPlanId.value = null;
+  selectedPlanId.value = '';
   selectedPlanStructure.value = null;
-  selectedStageId.value = null;
+  selectedStageId.value = '';
 
   // 重置表单
   if (formRef.value) {
@@ -534,19 +581,20 @@ const handleAiFillOptions = async () => {
     if (preset) {
       console.log("[AI Fill Debug] Applying preset...");
       // Assign common fields first
-      form.value.subject = selectedPlanStructure.value.subject || '未知学科';
+      form.value.subject = selectedPlanStructure.value?.subject || '未知学科';
       form.value.knowledge = stage.name;
       
       // Assign preset fields 
-      if (preset.resourceType !== undefined) form.value.resourceType = preset.resourceType;
-      if (preset.imageType !== undefined) form.value.imageType = [...preset.imageType];
-      if (preset.imageStyle !== undefined) form.value.imageStyle = [...preset.imageStyle];
-      if (preset.size !== undefined) form.value.size = preset.size;
-      if (preset.imageDesc !== undefined) form.value.imageDesc = preset.imageDesc;
-      if (preset.videoDuration !== undefined) form.value.videoDuration = preset.videoDuration;
-      if (preset.videoAspectRatio !== undefined) form.value.videoAspectRatio = preset.videoAspectRatio;
-      if (preset.videoStyle !== undefined) form.value.videoStyle = [...preset.videoStyle];
-      if (preset.videoScript !== undefined) form.value.videoScript = preset.videoScript;
+      const presetValues = preset as Partial<FormState>;
+      if (presetValues.resourceType !== undefined) form.value.resourceType = presetValues.resourceType;
+      if (presetValues.imageType !== undefined) form.value.imageType = [...presetValues.imageType];
+      if (presetValues.imageStyle !== undefined) form.value.imageStyle = [...presetValues.imageStyle];
+      if (presetValues.size !== undefined) form.value.size = presetValues.size;
+      if (presetValues.imageDesc !== undefined) form.value.imageDesc = presetValues.imageDesc;
+      if (presetValues.videoDuration !== undefined) form.value.videoDuration = presetValues.videoDuration;
+      if (presetValues.videoAspectRatio !== undefined) form.value.videoAspectRatio = presetValues.videoAspectRatio;
+      if (presetValues.videoStyle !== undefined) form.value.videoStyle = [...presetValues.videoStyle];
+      if (presetValues.videoScript !== undefined) form.value.videoScript = presetValues.videoScript;
       console.log("[AI Fill Debug] Assignments complete.");
     } else {
        console.warn("[AI Fill Debug] No preset found, assignments skipped.");
@@ -579,7 +627,7 @@ const handleAiFillOptions = async () => {
 }
 
 // --- Preset map (Keep this) ---
-const presetOptionsMap: Record<string, Partial<typeof form.value>> = {
+const presetOptionsMap: Record<string, Partial<FormState>> = {
   '复习旧知': {
     resourceType: 'image',
     imageType: ['思维导图', '概念图'],

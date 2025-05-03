@@ -380,7 +380,7 @@
                     <el-select v-model="dialogForm.videoStyle" placeholder="请选择视频风格" multiple clearable>
                         <el-option label="教学演示" value="教学演示" />
                         <el-option label="动画科普" value="动画科普" />
-                        <el-option label="真人出镜(模拟)" value="真人出镜(模拟)" />
+                        <el-option label="真人出镜" value="真人出镜" />
                         <el-option label="快速剪辑" value="快速剪辑" />
                     </el-select>
                 </el-form-item>
@@ -530,7 +530,7 @@ const historyPlans = ref<HistoryPlan[]>([
     id: 'plan1',
     name: '机器学习线性回归教案',
     type: '教案',
-    time: '2025-05-10 15:32:10',
+    time: '2025-05-11 15:32:00',
     content: {
       title: '机器学习线性回归',
       usage: '第4章',
@@ -552,7 +552,7 @@ const historyPlans = ref<HistoryPlan[]>([
     id: 'plan2', 
     name: 'Python基础语法入门',
     type: '教案',
-    time: '2025-05-10 15:32:10',
+    time: '2025-05-10 14:58:22',
     content: {
       title: 'Python基础语法入门',
       usage: '第1章',
@@ -746,7 +746,7 @@ const getPresetResourceInfo = (title: string): { resourceType: string; types: st
     } else if (lowerTitle.includes('练习')) {
       return { resourceType: 'image', types: ['示意图'], style: ['简洁'] };
     } else if (lowerTitle.includes('互动') || lowerTitle.includes('讨论')) {
-      return { resourceType: 'video', types: ['教学演示(模拟)'], duration: 60 };
+      return { resourceType: 'video', types: ['教学演示'], duration: 60 };
     } else {
       return { resourceType: 'image', types: ['示意图'], style: ['通用'] }; // Default
     }

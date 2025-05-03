@@ -195,9 +195,6 @@
       <div class="button-group">
         <el-button type="primary" @click="handleGenerateQuestions">生成题目</el-button>
         <el-button type="success" @click="handlePreview">预览</el-button>
-        <el-button type="warning" :loading="exporting" @click="handleExport">
-          {{ exporting ? '导出中...' : '导出' }}
-        </el-button>
         <el-button @click="handleReset">重置</el-button>
       </div>
     </template>
@@ -524,11 +521,11 @@ interface GenerationConfig {
     overallKnowledgePoints?: string[];
 }
 
-// --- Mock Question Bank ---
+// Restore the MockQuestion interface definition
 interface MockQuestion {
-  id: number;
+  id: number | string; // Allow string ID for generated ones
   type: string;
-  knowledgePoint: string; // For simplicity, assume one primary KP per question for mock data
+  knowledgePoint: string;
   stem: string;
   options?: string[];
   answer: string;
@@ -536,18 +533,10 @@ interface MockQuestion {
   difficulty?: number; // Optional: 1 (easy) to 5 (hard)
 }
 
+/* Comment out or remove the mockQuestionBank as it's no longer needed for generation logic
 const mockQuestionBank: MockQuestion[] = [
-  // --- 选择题 ---
-  { id: 101, type: '选择题', knowledgePoint: '数组', stem: '在大多数编程语言中，数组元素的索引通常从哪个数字开始？', options: ['0', '1', '-1', '不确定'], answer: 'A', analysis: '基于0的索引是计算机科学中的常见约定。' , difficulty: 1},
-  { id: 102, type: '选择题', knowledgePoint: '数组', stem: '哪个操作通常不是数组的基本操作？', options: ['访问元素', '修改元素', '动态调整大小', '获取长度'], answer: 'C', analysis: '静态数组的大小通常是固定的，动态调整大小需要额外的数据结构或操作。' , difficulty: 2},
-  // --- 填空题 ---
-  { id: 201, type: '填空题', knowledgePoint: '数组', stem: '访问数组中第 i 个元素的时间复杂度是 ____。', answer: 'O(1)', analysis: '数组可以通过索引直接计算内存地址。' , difficulty: 1},
-  /* Commenting out the rest for debugging
-  { id: 103, type: '选择题', knowledgePoint: '链表', stem: '与数组相比，链表在哪个操作上通常具有优势？', options: ['随机访问元素', '插入或删除元素', '内存占用', '缓存友好性'], answer: 'B', analysis: '链表插入删除只需修改指针，时间复杂度为O(1)，而数组可能需要移动大量元素。' , difficulty: 2},
-  ...
-  { id: 505, type: '编程题', knowledgePoint: '排序算法', stem: '实现归并排序算法。', answer: '参考代码：递归地将数组分成两半排序，然后合并两个有序子数组。', analysis: '考察分治思想和合并有序数组的操作。', difficulty: 3}
-  */
-];
+// ... existing code ...
+*/
 
 // --- Generate Questions Navigation Handler ---
 const handleGenerateQuestions = async () => {
@@ -570,50 +559,59 @@ const handleGenerateQuestions = async () => {
 
     console.log("准备生成题目，配置:", generationConfig);
 
-    // --- New Logic to Select Questions from Mock Bank ---
-    const selectedQuestions: MockQuestion[] = [];
-    const selectedIds = new Set<number>(); // Keep track of selected question IDs to avoid duplicates
+    // --- New Logic to Generate Placeholder Questions --- 
+    const generatedQuestionsList: MockQuestion[] = [];
+    let questionIdCounter = 1; // Simple counter for unique IDs
 
     if (selectedData.value.source === 'select') {
         for (const config of form.value.typeConfigs) {
             const questionType = config.type;
-            for (const kp in config.counts) {
-                if (config.counts.hasOwnProperty(kp)) {
-                    const requiredCount = config.counts[kp];
-                    // Find available questions in the bank matching type and KP, excluding already selected ones
-                    const availableQuestions = mockQuestionBank.filter(
-                        q => q.type === questionType && 
-                             q.knowledgePoint === kp && 
-                             !selectedIds.has(q.id)
-                    );
-
-                    // Shuffle available questions to get random ones (optional but good for variety)
-                    const shuffledAvailable = availableQuestions.sort(() => 0.5 - Math.random());
-                    
-                    // Select the required number of questions
-                    const questionsToTake = shuffledAvailable.slice(0, requiredCount);
-
-                    if (questionsToTake.length < requiredCount) {
-                        console.warn(`题库中类型为 "${questionType}", 知识点为 "${kp}" 的题目不足 ${requiredCount} 道，实际选取 ${questionsToTake.length} 道`);
-                        // You might want to show a user-facing message here too
+            // Check if counts exist for the config
+            if (config.counts) { 
+                for (const kp in config.counts) {
+                    // Check if kp is a valid key in counts
+                    if (Object.prototype.hasOwnProperty.call(config.counts, kp)) {
+                        const requiredCount = config.counts[kp] || 0; // Ensure count is a number
+                        for (let i = 0; i < requiredCount; i++) {
+                            const newQuestion: MockQuestion = {
+                                id: `gen-${questionIdCounter++}`,
+                                type: questionType,
+                                knowledgePoint: kp, // Keep KP for display filtering
+                                stem: `[${questionType}] 关于 "${kp}" 的题目 ${i + 1}`, 
+                                // Add basic structure based on type (optional but good for display)
+                                options: questionType === '选择题' ? ['选项A', '选项B', '选项C', '选项D'] : undefined,
+                                answer: '示例答案',
+                                analysis: '示例解析内容。',
+                                difficulty: Math.floor(Math.random() * 5) + 1 // Assign random difficulty 1-5
+                            };
+                            generatedQuestionsList.push(newQuestion);
+                        }
                     }
-
-                    // Add selected questions and their IDs
-                    selectedQuestions.push(...questionsToTake);
-                    questionsToTake.forEach(q => selectedIds.add(q.id));
                 }
             }
         }
-    } else {
-        // Handle 'upload' source - maybe select randomly or based on file analysis (simplified for now)
-        console.warn('基于文件上传的题目生成逻辑尚未实现，将随机选择几道题作为示例。');
-        const randomQuestions = mockQuestionBank.sort(() => 0.5 - Math.random()).slice(0, 5); // Select 5 random questions
-        selectedQuestions.push(...randomQuestions);
+    } else { // Handle 'upload' source
+        console.log('基于文件上传，生成 5 个通用占位题目。');
+        const typesForUpload = ['选择题', '填空题', '简答题', '判断题', '综合题'];
+        for (let i = 0; i < 5; i++) {
+            const randomType = typesForUpload[Math.floor(Math.random() * typesForUpload.length)];
+            const newQuestion: MockQuestion = {
+                 id: `upload-gen-${questionIdCounter++}`,
+                 type: randomType,
+                 knowledgePoint: '基于文件内容', // Generic KP for upload
+                 stem: `[${randomType}] 基于上传文件的题目 ${i + 1}`,
+                 options: randomType === '选择题' ? ['选项A', '选项B', '选项C'] : undefined,
+                 answer: '示例答案',
+                 analysis: '示例解析内容。',
+                 difficulty: Math.floor(Math.random() * 3) + 2 // Medium difficulty for upload? (2-4)
+             };
+             generatedQuestionsList.push(newQuestion);
+        }
     }
 
     // *** 更新状态以显示题目 ***
-    generatedQuestions.value = selectedQuestions; // Assign the newly selected questions
-    if (selectedQuestions.length > 0) {
+    generatedQuestions.value = generatedQuestionsList; // Assign the newly generated placeholder questions
+    if (generatedQuestionsList.length > 0) {
          ElMessage.success('题目已生成');
     } else {
          ElMessage.warning('根据当前配置未能从题库中选取到题目');
@@ -648,30 +646,6 @@ const handlePreview = async () => {
              ElMessage.info('已取消预览');
         });
     } 
-}
-
-const handleExport = async () => {
-  exporting.value = true
-  try {
-    await new Promise(resolve => setTimeout(resolve, 1500)) 
-    console.log("Exporting data:", form.value, selectedData.value);
-    const response = await axios.get('/api/export/question', { responseType: 'blob' }) 
-    const blob = new Blob([response.data], { type: response.headers['content-type'] })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = '习题资源.docx'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-    ElMessage.success('导出成功 (模拟)')
-  } catch (e) {
-    console.error("Export failed:", e)
-    ElMessage.error('导出失败 (模拟)')
-  } finally {
-    exporting.value = false
-  }
 }
 
 const handleReset = () => {

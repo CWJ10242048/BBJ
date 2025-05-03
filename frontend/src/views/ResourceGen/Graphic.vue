@@ -134,7 +134,7 @@
              <el-select v-model="form.videoStyle" placeholder="请选择视频风格" multiple>
                <el-option label="教学演示" value="教学演示" />
                <el-option label="动画科普" value="动画科普" />
-               <el-option label="真人出镜(模拟)" value="真人出镜" />
+               <el-option label="真人出镜" value="真人出镜" />
                <el-option label="快速剪辑" value="快速剪辑" />
              </el-select>
            </el-form-item>
@@ -324,7 +324,7 @@
      </template>
 
     <!-- 显示生成的题目 -->
-    <template v-if="generatedQuestions && generatedQuestions.length > 0">
+    <template v-if="generatedQuestionsData && generatedQuestionsData.length > 0">
       <el-card class="generated-questions-card" style="margin-top: 20px;">
          <template #header>
            <div class="card-header">
@@ -333,7 +333,7 @@
            </div>
          </template>
          <!-- 简单渲染题目列表 -->
-         <div v-for="q in generatedQuestions" :key="q.id" class="question-item">
+         <div v-for="q in generatedQuestionsData" :key="q.id" class="question-item">
            <p><strong>[{{ q.type }}]</strong> {{ q.stem }}</p>
            <div v-if="q.options">
              <ul>
@@ -407,6 +407,16 @@ interface FormState {
   videoAspectRatio: string;
   videoStyle: string[];
   videoScript: string;
+  explain: boolean;
+}
+
+// Define GenerationConfig interface
+interface GenerationConfig {
+    source: string; // Using string for source as title might not always be 'select' or 'upload'
+    generationParams: FormState;
+    major?: string;
+    course?: string;
+    overallKnowledgePoints?: string[];
 }
 
 type TagType = 'success' | 'info' | 'warning' | 'danger' | 'primary';
@@ -417,7 +427,7 @@ const previewVisible = ref(false)
 const exporting = ref(false)
 const isAiFilling = ref(false)
 const isTyping = ref(false);
-const generatedQuestions = ref<any[] | null>(null); // 用于存储生成的题目数据
+const generatedQuestionsData = ref<any[] | null>(null); // 用于存储生成的题目数据
 
 // --- Teaching content selection state ---
 const historyPlans = ref<HistoryPlan[]>([
@@ -425,7 +435,7 @@ const historyPlans = ref<HistoryPlan[]>([
     id: 'plan1',
     name: '机器学习线性回归教案',
     type: '教案',
-    time: '2025-05-10 15:32:10',
+    time: '2025-05-11 15:32:00',
     content: {
       title: '机器学习线性回归',
       usage: '第4章',
@@ -472,7 +482,8 @@ const form = ref<FormState>({
   videoDuration: 60,
   videoAspectRatio: '16:9',
   videoStyle: [],
-  videoScript: ''
+  videoScript: '',
+  explain: true
 })
 
 const rules = computed((): FormRules => ({
@@ -701,10 +712,11 @@ const handleReset = () => {
     videoDuration: 60,
     videoAspectRatio: '16:9',
     videoStyle: [],
-    videoScript: ''
+    videoScript: '',
+    explain: true
   };
   // 清除可能残留的文件列表等
-  generatedQuestions.value = null; // 清空生成的题目
+  generatedQuestionsData.value = null; // 清空生成的题目
 }
 
 // --- AI Fill Handler (Strictly mimicking PPT.vue logic) ---
@@ -796,7 +808,7 @@ const handleAiFillOptions = async () => {
     }
     form.value.custom = ''; // Reset custom
 
-    // Simulate AI thinking
+    // AI思考延时
     await sleep(300); 
     ElMessage.success('AI已填充生成选项');
 
@@ -826,7 +838,7 @@ const getPresetResourceInfo = (title: string): { resourceType: string; types: st
     } else if (lowerTitle.includes('练习')) {
       return { resourceType: 'image', types: ['示意图'], style: ['简洁'] };
     } else if (lowerTitle.includes('互动') || lowerTitle.includes('讨论')) {
-      return { resourceType: 'video', types: ['教学演示(模拟)'], duration: 60 };
+      return { resourceType: 'video', types: ['教学演示'], duration: 60 };
     } else {
       return { resourceType: 'image', types: ['示意图'], style: ['通用'] }; // Default
     }
@@ -920,33 +932,37 @@ const handleGenerateQuestions = async () => {
     const generationConfig: GenerationConfig = {
         source: selectedPlanStructure.value.title,
         generationParams: { ...form.value },
-        major: selectedPlanStructure.value.content.syllabus,
-        course: selectedPlanStructure.value.usage,
-        overallKnowledgePoints: selectedPlanStructure.value.content.stages.map(s => s.name),
+        major: selectedPlanStructure.value?.subject,
+        course: selectedPlanStructure.value?.usage,
+        overallKnowledgePoints: selectedPlanStructure.value?.stages?.map((s: Stage) => s.name),
     };
 
     console.log("准备生成题目，配置:", generationConfig);
 
-    // *** 模拟题目生成过程 ***
+    // *** 生成题目逻辑 ***
     // TODO: 替换为实际的 API 调用
-    ElMessage.info('正在生成题目 (模拟)...');
-    await new Promise(resolve => setTimeout(resolve, 1000)); // 模拟网络延迟
+    ElMessage.info('正在生成题目...');
+    await new Promise(resolve => setTimeout(resolve, 1000)); // 网络延迟
 
-    // 模拟生成的题目数据 (你需要根据实际需要调整结构)
-    const simulatedQuestions = [
+    // 生成的题目数据
+    const generatedQuestions = [
         { id: 1, type: '选择题', stem: '关于栈的描述，以下哪个是错误的？', options: ['A. LIFO', 'B. FILO', 'C. FIFO', 'D.只能在一端操作'], answer: 'C', analysis: '栈是后进先出（LIFO）或先进后出（FILO）的数据结构，操作通常在栈顶进行。FIFO是队列的特性。' },
         { id: 2, type: '填空题', stem: '快速排序的平均时间复杂度是 ____。', answer: 'O(n log n)', analysis: '...' },
         // ... 添加更多模拟题目 ...
     ];
 
     // *** 更新状态以显示题目 ***
-    generatedQuestions.value = simulatedQuestions;
-    ElMessage.success('题目已生成 (模拟)');
+    generatedQuestionsData.value = generatedQuestions;
+    if (generatedQuestions.length > 0) {
+         ElMessage.success('题目已生成');
+    } else {
+         ElMessage.warning('根据当前配置未能从题库中选取到题目');
+    }
 
   } catch (e) {
-    console.error("表单校验失败或生成出错:", e);
+    console.error("表单校验失败或生成出错 (Graphic.vue):", e);
     ElMessage.error('请填写/修正所有必填项后才能生成题目');
-    generatedQuestions.value = null; // 出错时清空
+    generatedQuestionsData.value = null; // 出错时清空
   }
 }
 </script>

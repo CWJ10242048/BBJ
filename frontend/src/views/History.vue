@@ -75,11 +75,9 @@ const fetchRecords = async () => {
     historyList.value = response.data
   } catch (error) {
     console.error('获取历史记录失败:', error)
-    // 出错时显示模拟数据，保证界面正常显示
-    historyList.value = getMockHistoryData()
+    ElMessage.error('获取历史记录失败')
   } finally {
     loading.value = false
-    ElMessage.success('数据加载成功')
   }
 }
 
@@ -89,7 +87,7 @@ const handleExport = async (row: HistoryRecord) => {
     ElMessage.success('导出成功')
   } catch (error) {
     console.error('导出失败:', error)
-    ElMessage.success('导出功能模拟成功')
+    ElMessage.error('导出失败')
   }
 }
 

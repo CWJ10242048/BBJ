@@ -398,6 +398,9 @@ interface HistoryRecord {
   time: string
 }
 
+// Define allowed tag types explicitly
+type ElTagType = 'success' | 'info' | 'warning' | 'danger' | 'primary'
+
 interface UploadedPlan {
   name: string
   file: File
@@ -484,7 +487,6 @@ const typeOptions = [
   { label: '头脑风暴', value: '头脑风暴' },
   { label: '团队竞赛', value: '团队竞赛' },
   { label: '辩论', value: '辩论' },
-  { label: '情境模拟', value: '情境模拟' },
   { label: '案例研究', value: '案例研究' },
   { label: '小测验', value: '小测验' }
 ]
@@ -532,7 +534,7 @@ const historyPlans = ref<Plan[]>([
     id: '1',
     name: '计算机组成原理教案',
     type: '教案',
-    time: '2025-05-10 15:32:10',
+    time: '2025-05-10 23:32:00',
     stages: [
       { 
         id: 'stage1', 
@@ -681,15 +683,15 @@ const isValidFileType = (file: File, allowedTypes: string[]) => {
 }
 
 // 根据记录类型获取标签类型
-const getRecordTypeTag = (type: string) => {
-  const typeMap: Record<string, string> = {
+const getRecordTypeTag = (type: string): ElTagType => {
+  const typeMap: Record<string, ElTagType> = {
     '教案': 'success',
     'PPT': 'warning',
     '习题': 'danger',
     '教学大纲': 'info',
     '图文': 'primary'
   }
-  return typeMap[type] || ''
+  return typeMap[type] || 'info' // Return 'info' as default or adjust as needed
 }
 
 // 格式化日期显示
@@ -813,7 +815,7 @@ const suggestInteractionType = (stage: Stage) => {
   } else if (name.includes('总结') || name.includes('复习')) {
     stage.interaction.types.push('问答互动', '小测验')
   } else if (name.includes('导入') || name.includes('引入')) {
-    stage.interaction.types.push('头脑风暴', '情境模拟')
+    stage.interaction.types.push('头脑风暴')
   } else {
     stage.interaction.types.push('问答互动')
   }
@@ -1161,18 +1163,16 @@ const handleExport = async () => {
               ...(index < stages.length - 1 ? [
                 new docx.Paragraph({
                   children: [
-                    new docx.TextRun({
-                      text: "",
-                      border: {
-                        bottom: {
-                          color: "#CCCCCC",
-                          space: 1,
-                          style: docx.BorderStyle.SINGLE,
-                          size: 6,
-                        },
-                      }
-                    })
+                    new docx.TextRun({ text: "" })
                   ],
+                  border: {
+                    bottom: {
+                      color: "#CCCCCC",
+                      space: 1,
+                      style: docx.BorderStyle.SINGLE,
+                      size: 6,
+                    }
+                  },
                   spacing: {
                     after: 200,
                   },

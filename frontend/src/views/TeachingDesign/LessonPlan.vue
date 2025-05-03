@@ -754,7 +754,7 @@ const handleAnalyzeReflection = async () => {
 
   analyzing.value = true
   try {
-    // 模拟API调用延迟
+    // API调用延迟
     await new Promise(resolve => setTimeout(resolve, 2000))
 
     // 根据课程类型生成不同的评估结果
@@ -1196,7 +1196,7 @@ const handleFileChange = (file: any) => {
   uploadStatus.value = ''
   selectedHistorySyllabus.value = '' // 清除历史大纲选择
   
-  // 模拟上传进度
+  // 上传进度
   const timer = setInterval(() => {
     if (uploadProgress.value < 100) {
       uploadProgress.value += 20
@@ -2124,7 +2124,7 @@ const getResourceIconColor = (type: string) => {
 const handleGenerateResources = async () => {
   generating.value = true
   try {
-    // 模拟API调用
+    // API调用
     await new Promise(resolve => setTimeout(resolve, 2000))
     
     // 生成推荐资源

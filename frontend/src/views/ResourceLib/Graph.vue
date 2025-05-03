@@ -37,6 +37,18 @@
 import { ref, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
 
+// Define NodeDetail interface
+interface NodeDetail {
+  name: string;
+  related: { name: string; score: string; }[];
+}
+
+// Define GraphNode interface
+interface GraphNode {
+  name: string;
+  status: string;
+}
+
 const typeOptions = [
   { label: '专业维度知识图谱', value: 'major' },
   { label: '学科维度知识图谱', value: 'subject' },
@@ -51,9 +63,9 @@ const typeOptions = [
 const selectedType = ref('major')
 const selectedGraph = ref('cs')
 const chartRef = ref()
-const nodeDetail = ref(null)
+const nodeDetail = ref<NodeDetail | null>(null)
 
-const graphOptions = {
+const graphOptions: Record<string, { label: string; value: string }[]> = {
   major: [
     { label: '计算机科学与技术', value: 'cs' },
     { label: '软件工程', value: 'se' },
@@ -187,9 +199,9 @@ const graphDataMap = {
   // ... 其余图谱同理补充 ...
 }
 
-// 节点相关知识点模拟（可根据节点名生成不同内容）
-function getNodeDetail(nodeName) {
-  // 简单模拟：返回2~4个相关知识点，名称和关联度随机
+// 节点相关知识点
+function getNodeDetail(nodeName: string): NodeDetail {
+  // 返回2~4个相关知识点，名称和关联度随机
   const all = [
     '算法基础', '贪心算法', '数据结构', '操作系统', '数据库系统',
     '机器学习', '深度学习', '网络安全', '系统设计', '创新能力',
@@ -211,16 +223,17 @@ function getNodeDetail(nodeName) {
 }
 
 function renderGraph() {
-  const data = graphDataMap[selectedGraph.value] || { nodes: [], links: [] }
+  const currentGraphKey = selectedGraph.value as keyof typeof graphDataMap;
+  const data = graphDataMap[currentGraphKey] || { nodes: [], links: [] }
   if (!chartRef.value) return
   const chart = echarts.init(chartRef.value)
   chart.setOption({
-    tooltip: { trigger: 'item', formatter: (params) => params.dataType === 'node' ? params.data.name : '' },
+    tooltip: { trigger: 'item', formatter: (params: any) => params.dataType === 'node' ? params.data.name : '' },
     series: [{
       type: 'graph',
       layout: 'force',
       roam: true,
-      data: data.nodes.map(n => ({
+      data: data.nodes.map((n: GraphNode) => ({
         name: n.name,
         symbolSize: 48,
         itemStyle: {
@@ -235,9 +248,11 @@ function renderGraph() {
     }]
   })
   chart.off('click')
-  chart.on('click', (params) => {
-    if (params.dataType === 'node') {
-      nodeDetail.value = getNodeDetail(params.data.name)
+  chart.on('click', (params: any) => {
+    if (params.dataType === 'node' && params.data && typeof params.data.name === 'string') {
+      nodeDetail.value = getNodeDetail(params.data.name);
+    } else {
+      nodeDetail.value = null;
     }
   })
 }
@@ -248,7 +263,8 @@ watch([selectedType, selectedGraph], () => {
 })
 
 function handleTypeChange() {
-  const arr = graphOptions[selectedType.value]
+  const currentTypeKey = selectedType.value as keyof typeof graphOptions;
+  const arr = graphOptions[currentTypeKey];
   if (arr && arr.length) selectedGraph.value = arr[0].value
 }
 

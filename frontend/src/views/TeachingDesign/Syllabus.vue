@@ -629,12 +629,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElLoading } from 'element-plus'
+import { ref, computed, nextTick, watch, onMounted } from 'vue'
+import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
+import type { FormInstance, FormItemRule, UploadFile, UploadFiles, FormRules } from 'element-plus' // Import FormRules
 import { Document, Delete, UploadFilled, Loading, ChatDotRound, UserFilled, Position, Mic, Cpu, Search, Check, Link } from '@element-plus/icons-vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import * as docx from 'docx'
+import { nanoid } from 'nanoid'
 
 const router = useRouter()
 
@@ -661,12 +663,11 @@ interface SyllabusForm {
   customRequirements: string;
 }
 
-const formRef = ref()
+const formRef = ref<FormInstance>() // Specify FormInstance type
 const previewVisible = ref(false)
 const showReferences = ref(false)
 const uploadProgress = ref(0)
-const uploadStatus = ref('')
-const selectedTemplate = ref('default')
+const uploadStatus = ref<'' | 'success' | 'warning' | 'exception'>('') // Correct type for el-progress status
 const exporting = ref(false)
 const importDialogVisible = ref(false)
 const importFile = ref<File | null>(null)
@@ -704,18 +705,19 @@ const form = ref<SyllabusForm>({
   customRequirements: ''
 })
 
-const rules = {
+// Use FormRules type for rules
+const rules = computed((): FormRules => ({
   courseName: [{ required: true, message: '请输入课程名称', trigger: 'blur' }],
   courseType: [{ required: true, message: '请选择课程类型', trigger: 'change' }],
-  credits: [{ required: true, message: '请输入学分', trigger: 'blur' }],
-  totalHours: [{ required: true, message: '请输入总学时', trigger: 'blur' }],
-  labHours: [{ required: true, message: '请输入实验学时', trigger: 'blur' }],
+  credits: [{ required: true, message: '请输入学分', trigger: 'blur', type: 'number' }], // Add type: 'number' if applicable
+  totalHours: [{ required: true, message: '请输入总学时', trigger: 'blur', type: 'number' }], // Add type: 'number' if applicable
+  labHours: [{ required: true, message: '请输入实验学时', trigger: 'blur', type: 'number' }], // Add type: 'number' if applicable
   chapters: [{ required: true, message: '请输入章节安排', trigger: 'blur' }],
   keyPoints: [{ required: true, message: '请输入重点难点', trigger: 'blur' }],
   teachingMethods: [{ required: true, type: 'array', min: 1, message: '请选择教学方法', trigger: 'change' }],
   teachingMeans: [{ required: true, type: 'array', min: 1, message: '请选择教学手段', trigger: 'change' }],
-  assessmentMethods: [{ required: true, message: '请输入考核方式', trigger: 'blur' }],
-}
+  assessmentMethods: [{ required: true, message: '请输入考核方式', trigger: 'blur' }]
+}))
 
 // 模板预设内容
 interface TemplatePreset {
@@ -747,7 +749,9 @@ const templates: Record<string, TemplatePreset> = {
   }
 }
 
-const handleTemplateChange = (template: string) => {
+// Correct the parameter type for handleTemplateChange
+const handleTemplateChange = (template: string | number | boolean | undefined) => {
+  if (typeof template !== 'string') return; // Guard against non-string values
   const selected = templates[template as keyof typeof templates]
   if (selected) {
     form.value.teachingMethods = selected.teachingMethods
@@ -1194,8 +1198,11 @@ const handleImportTemplate = () => {
   importDialogVisible.value = true
 }
 
-const handleImportFileChange = (uploadFile: { raw: File }) => {
-  importFile.value = uploadFile.raw
+// Correct the parameter types for handleImportFileChange
+const handleImportFileChange = (uploadFile: UploadFile, uploadFiles: UploadFiles) => {
+      if (uploadFile.raw) { // Access raw file correctly
+          importFile.value = uploadFile.raw;
+      }
 }
 
 const startAiAnalysis = () => {
@@ -1458,10 +1465,10 @@ const searchBookByISBN = async () => {
   bookInfo.value = null
   
   try {
-    // 模拟API调用延迟
+    // API调用延迟
     await new Promise(resolve => setTimeout(resolve, 2000))
     
-    // 这里应该调用实际的API，这里使用模拟数据
+    // 这里应该调用实际的API，这里使用数据
     bookInfo.value = {
       title: '机器学习',
       author: '周志华',
@@ -1545,6 +1552,9 @@ const recommendedResources = ref([
     url: 'https://paperswithcode.com'
   }
 ])
+
+// Re-add selectedTemplate definition
+const selectedTemplate = ref('default')
 </script>
 
 <style scoped>

@@ -66,8 +66,8 @@
 
       <!-- 右侧信息编辑区域 -->
       <div class="profile-edit-section">
-        <el-tabs type="border-card" class="custom-tabs">
-          <el-tab-pane label="基本资料">
+        <el-tabs type="border-card" class="custom-tabs" v-model="activeTabName">
+          <el-tab-pane label="基本资料" name="basic">
             <el-form :model="form" :rules="rules" ref="formRef" label-width="100px" class="user-form">
               <el-form-item label="昵称" prop="nickname">
                 <el-input v-model="form.nickname" placeholder="请输入昵称" prefix-icon="User" />
@@ -99,7 +99,7 @@
             </el-form>
           </el-tab-pane>
           
-          <el-tab-pane label="账户安全">
+          <el-tab-pane label="账户安全" name="security">
             <div class="security-section">
               <div class="security-item">
                 <div class="security-item-info">
@@ -136,7 +136,7 @@
             </div>
           </el-tab-pane>
           
-          <el-tab-pane label="消息通知">
+          <el-tab-pane label="消息通知" name="notifications">
             <div class="notification-settings">
               <div class="setting-item">
                 <div class="setting-info">
@@ -207,12 +207,15 @@ import type { UserInfo, UserUpdateRequest } from '@/types/user'
 import type { FormInstance } from 'element-plus'
 import { mockUserInfo, mockApiResponse } from '@/api/mock'
 import lockBackImg from '@/assets/image/lock-back.jpg'
+import { useRoute } from 'vue-router'
 
 const formRef = ref<FormInstance>()
 const pwdFormRef = ref<FormInstance>()
 const pwdDialog = ref(false)
 const saveLoading = ref(false)
 const pwdLoading = ref(false)
+const activeTabName = ref('basic')
+const route = useRoute()
 
 // 是否使用模拟数据
 const useMockData = true;
@@ -286,12 +289,16 @@ const pwdRules = {
   ]
 }
 
-// 组件挂载时获取用户信息
+// 组件挂载时获取用户信息，并检查路由哈希
 onMounted(async () => {
   try {
     await getUserInfo()
   } catch (error) {
     console.error('获取用户信息失败:', error)
+  }
+
+  if (route.hash === '#security') {
+    activeTabName.value = 'security';
   }
 })
 

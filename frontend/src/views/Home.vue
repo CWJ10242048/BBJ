@@ -214,6 +214,118 @@
       </el-col>
     </el-row>
 
+    <!-- 备课详情对话框 -->
+    <el-dialog
+      v-model="historyDetailDialogVisible"
+      :title="selectedHistoryPlan?.title || '备课详情'"
+      width="70%"
+      top="5vh"
+      append-to-body
+      class="history-detail-dialog"
+      :close-on-click-modal="false"
+    >
+      <div v-if="selectedHistoryPlan" class="plan-content">
+        <div class="plan-header">
+          <h2>{{ selectedHistoryPlan.title }}</h2>
+          <p class="plan-meta">生成时间：{{ selectedHistoryPlan.time }}</p>
+        </div>
+
+        <el-scrollbar height="70vh">
+          <div class="plan-section">
+            <h3><el-icon><Aim /></el-icon> 教学目标</h3>
+            <div class="section-content">
+              <p v-for="(objective, index) in selectedHistoryPlan.objectives" :key="'obj-'+index">
+                {{ index + 1 }}. {{ objective }}
+              </p>
+            </div>
+          </div>
+
+          <div class="plan-section">
+            <h3><el-icon><DataAnalysis /></el-icon> 学情分析</h3>
+            <div class="section-content" v-html="selectedHistoryPlan.analysis"></div>
+          </div>
+
+          <div class="plan-section">
+            <h3><el-icon><Key /></el-icon> 教学重难点</h3>
+            <div class="section-content">
+              <h4>重点：</h4>
+              <div class="tags-container">
+                <el-tag
+                  v-for="(point, index) in selectedHistoryPlan.keyPoints"
+                  :key="'key-' + index"
+                  type="primary"
+                  effect="light"
+                  size="large"
+                  class="point-tag"
+                >
+                  {{ point }}
+                </el-tag>
+                <el-empty v-if="!selectedHistoryPlan.keyPoints || selectedHistoryPlan.keyPoints.length === 0" description="暂无重点内容" :image-size="50"></el-empty>
+              </div>
+
+              <h4 style="margin-top: 15px;">难点：</h4>
+              <div class="tags-container">
+                <el-tag
+                  v-for="(point, index) in selectedHistoryPlan.difficultPoints"
+                  :key="'diff-' + index"
+                  type="danger"
+                  effect="light"
+                  size="large"
+                  class="point-tag"
+                >
+                  {{ point }}
+                </el-tag>
+                <el-empty v-if="!selectedHistoryPlan.difficultPoints || selectedHistoryPlan.difficultPoints.length === 0" description="暂无难点内容" :image-size="50"></el-empty>
+              </div>
+            </div>
+          </div>
+
+          <div class="plan-section">
+            <h3><el-icon><Promotion /></el-icon> 教学过程</h3>
+            <div class="section-content">
+              <el-timeline>
+                <el-timeline-item
+                  v-for="(stage, index) in selectedHistoryPlan.process"
+                  :key="'proc-'+index"
+                  :timestamp="stage.name"
+                  placement="top"
+                >
+                  <div v-html="stage.content"></div>
+                </el-timeline-item>
+              </el-timeline>
+            </div>
+          </div>
+
+          <div class="plan-section">
+            <h3><el-icon><Finished /></el-icon> 教学评价</h3>
+            <div class="section-content" v-html="selectedHistoryPlan.evaluation"></div>
+          </div>
+
+          <div class="plan-section">
+            <h3><el-icon><Reading /></el-icon> 课后作业</h3>
+            <div class="section-content">
+              <ul>
+                <li v-for="(homework, index) in selectedHistoryPlan.homework" :key="'hw-'+index">
+                  {{ homework }}
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="plan-section">
+            <h3><el-icon><Edit /></el-icon> 教学反思</h3>
+            <div class="section-content" v-html="selectedHistoryPlan.reflection"></div>
+          </div>
+        </el-scrollbar>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="historyDetailDialogVisible = false">关闭</el-button>
+          <el-button type="primary" @click="downloadPlan(selectedHistoryPlan)" :icon="Download">下载</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
     <!-- AI助手弹窗 -->
     <div class="ai-assistant-floating" :class="{ 'ai-assistant-expanded': aiExpanded }">
       <div class="ai-assistant-toggle" @click="toggleAiAssistant">
@@ -269,12 +381,22 @@ import {
   DataLine,
   Bell,
   ChatDotRound,
-  Close
+  Close,
+  Aim, 
+  DataAnalysis, 
+  Key, 
+  Promotion, 
+  Finished, 
+  Reading, 
+  Edit,
+  Download 
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const prompt = ref('')
 const aiExpanded = ref(false)
+const historyDetailDialogVisible = ref(false)
+const selectedHistoryPlan = ref(null)
 
 // AI助手展开/折叠控制
 const toggleAiAssistant = () => {
@@ -298,8 +420,49 @@ const navigateTo = (path) => {
 
 // 查看历史记录详情
 const viewHistoryDetail = (item) => {
-  // 实际应用中可能需要跳转到详情页或打开详情弹窗
+  // 实际应用中可能需要根据 item.id 从后端获取完整数据
+  // 这里我们模拟生成一个 TeachingPlan 结构的数据
   console.log('查看历史记录详情:', item)
+
+  // 模拟生成详细数据
+  const simulatedPlan = {
+    id: item.id,
+    title: item.title,
+    time: item.time,
+    objectives: [
+      `理解 ${item.title} 的核心概念。`,
+      `掌握 ${item.type === 'syllabus' ? '大纲设计' : (item.type === 'ppt' ? 'PPT制作' : '习题设计')} 的基本方法。`,
+      '培养分析和解决相关问题的能力。'
+    ],
+    analysis: `<p>根据历史数据分析，学生在此部分内容上表现良好，但建议关注 ${item.title.substring(1, 5)} 部分的实践应用。</p>`,
+    keyPoints: ['核心概念理解', '基本原理掌握', item.type === 'ppt' ? '图文排版' : '逻辑结构'],
+    difficultPoints: ['深入应用', item.type === 'syllabus' ? '创新性设计' : '细节处理'],
+    process: [
+      { name: '阶段一：导入与目标设定', content: '<p>回顾相关知识，明确本节课或本次设计的学习目标。</p>' },
+      { name: '阶段二：核心内容讲解/设计', content: `<p>详细讲解 ${item.title} 的核心内容，或进行 ${item.type} 的主要设计步骤。</p>` },
+      { name: '阶段三：实践与反馈', content: '<p>安排相关的练习、讨论或实际操作，并提供反馈。</p>' },
+      { name: '阶段四：总结与拓展', content: '<p>总结本次内容，布置相关作业或拓展思考。</p>' },
+    ],
+    evaluation: '<p>通过课堂表现、作业完成情况和最终成果来综合评估。</p>',
+    homework: [
+      `复习 ${item.title} 相关内容。`,
+      '完成配套练习题。'
+    ],
+    reflection: `<p>本次 ${item.type} 生成效果良好，建议在后续使用中进一步优化 ${item.title.includes('基础') ? '基础概念' : '高级特性'} 部分的呈现方式。</p>`
+  }
+
+  selectedHistoryPlan.value = simulatedPlan
+  historyDetailDialogVisible.value = true
+}
+
+// 添加一个假的下载函数以消除模板错误
+const downloadPlan = (plan) => {
+  if (plan) {
+    alert(`正在下载：${plan.title}`)
+    // 实际下载逻辑会更复杂，这里仅作演示
+  } else {
+    alert('没有可下载的计划')
+  }
 }
 
 // 模拟历史记录数据
@@ -335,25 +498,25 @@ const notices = ref([
   {
     id: 1,
     title: '系统更新：新增学情分析功能',
-    time: '2023-11-15',
+    time: '2025-04-15',
     read: false
   },
   {
     id: 2,
     title: '教育部关于加强中小学课堂教学改革的通知',
-    time: '2023-11-10',
+    time: '2025-04-10',
     read: false
   },
   {
     id: 3,
     title: '本周教研活动安排',
-    time: '2023-11-08',
+    time: '2025-04-08',
     read: true
   },
   {
     id: 4,
     title: '智能备课系统使用指南已发布',
-    time: '2023-11-05',
+    time: '2025-04-05',
     read: true
   }
 ])
@@ -905,5 +1068,90 @@ const notices = ref([
 
 .header-actions {
   margin-left: auto;
+}
+
+/* 历史详情对话框样式 (部分参考 Personalized.vue) */
+.history-detail-dialog :deep(.el-dialog__body) {
+  padding: 0 20px 20px 20px; /* 调整内边距 */
+}
+
+.plan-content {
+  /* padding: 20px; */ /* 内边距移到dialog body */
+}
+.plan-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-top: 10px; /* 给顶部一些空间 */
+}
+.plan-header h2 {
+  margin: 0 0 8px 0;
+  color: #303133;
+}
+.plan-meta {
+  color: #909399;
+  font-size: 14px;
+}
+.plan-section {
+  margin-bottom: 24px;
+}
+.plan-section h3 {
+  color: #303133;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ebeef5; /* 添加分隔线 */
+  display: flex; /* 让图标和文字对齐 */
+  align-items: center;
+  gap: 8px; /* 图标和文字间距 */
+  font-size: 18px;
+}
+.section-content {
+  color: #606266;
+  line-height: 1.7; /* 调整行高 */
+  font-size: 14px; /* 调整字号 */
+}
+.section-content ul {
+  margin: 8px 0;
+  padding-left: 25px; /* 调整列表缩进 */
+}
+.section-content li {
+  margin: 6px 0; /* 调整列表项间距 */
+}
+
+.plan-section h4 { 
+  margin: 12px 0 10px 0; 
+  font-weight: 600;
+  color: #409EFF; 
+  font-size: 15px;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; 
+  margin-bottom: 10px; 
+}
+
+.point-tag {
+  padding: 0 12px; 
+  height: 32px; 
+  line-height: 30px; 
+}
+
+.tags-container .el-empty {
+  padding: 10px 0; 
+}
+
+/* 时间线样式微调 */
+.section-content .el-timeline {
+  padding-left: 10px;
+}
+.section-content .el-timeline-item__timestamp {
+  font-weight: bold;
+  color: #303133;
+}
+
+/* 移除滚动条默认内边距 */
+.history-detail-dialog :deep(.el-scrollbar__view) {
+  padding-right: 15px; /* 给滚动条留出空间 */
 }
 </style>

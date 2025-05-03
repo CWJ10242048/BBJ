@@ -1,9 +1,11 @@
 <template>
   <router-view />
+  <LockScreen />
 </template>
 
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import LockScreen from '@/views/LockScreen.vue'
 </script>
 
 <style>
@@ -29,5 +31,25 @@ html, body {
 .app-container > * {
   flex: 1;
   overflow-y: auto;
+}
+
+/* Element Plus 滚动条样式 (可选) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #c0c4cc;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #a8abb2;
 }
 </style>

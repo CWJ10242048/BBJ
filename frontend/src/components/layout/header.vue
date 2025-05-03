@@ -26,11 +26,40 @@
       
       <!-- 右侧用户信息和操作区 -->
       <div class="header-right">
-        <div class="icon-div notification">
-          <el-badge :value="3" :max="99" type="danger">
-            <el-icon><Bell /></el-icon>
-          </el-badge>
-        </div>
+        <!-- 消息通知 Popover -->
+        <el-popover
+          placement="bottom-end"
+          :width="300"
+          trigger="click"
+        >
+          <template #reference>
+            <div class="icon-div notification">
+              <el-badge :value="unreadCount" :max="99" :hidden="unreadCount === 0" type="danger">
+                <el-icon><Bell /></el-icon>
+              </el-badge>
+            </div>
+          </template>
+          <div class="notification-popover">
+            <div class="popover-header">
+              <span>通知</span>
+              <el-button type="text" size="small" @click="markAllRead">全部已读</el-button>
+            </div>
+            <el-scrollbar height="250px">
+              <div v-if="notifications.length === 0" class="no-notifications">
+                暂无新通知
+              </div>
+              <div v-else>
+                <div v-for="item in notifications" :key="item.id" class="notification-item" :class="{ 'is-read': item.read }" @click="handleNotificationClick(item)">
+                  <div class="notification-title">{{ item.title }}</div>
+                  <div class="notification-time">{{ item.time }}</div>
+                </div>
+              </div>
+            </el-scrollbar>
+            <div class="popover-footer">
+              <el-button type="text" size="small" @click="viewAllNotifications">查看全部</el-button>
+            </div>
+          </div>
+        </el-popover>
         
         <div class="user-profile">
           <el-dropdown trigger="click" @command="handleCommand">
@@ -59,6 +88,39 @@
         </div>
       </div>
     </el-header>
+
+    <!-- 全部通知对话框 -->
+    <el-dialog
+      v-model="allNotificationsDialogVisible"
+      title="全部通知"
+      width="500px"
+      :close-on-click-modal="false"
+      append-to-body
+      class="all-notifications-dialog"
+    >
+      <div class="dialog-content">
+        <el-scrollbar height="400px">
+          <div v-if="notifications.length === 0" class="no-notifications-dialog">
+            当前没有通知
+          </div>
+          <div v-else class="notification-list-dialog">
+            <div v-for="item in notifications" :key="item.id" class="notification-item-dialog" :class="{ 'is-read': item.read }">
+              <div class="notification-content-dialog">
+                <div class="notification-title-dialog">{{ item.title }}</div>
+                <div class="notification-time-dialog">{{ item.time }}</div>
+              </div>
+              <el-button v-if="!item.read" type="text" size="small" @click="markSingleRead(item)">标为已读</el-button>
+            </div>
+          </div>
+        </el-scrollbar>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="markAllReadInDialog">全部标记为已读</el-button>
+          <el-button type="primary" @click="allNotificationsDialogVisible = false">关闭</el-button>
+        </div>
+      </template>
+    </el-dialog>
 </template>
 
 <script setup>
@@ -66,6 +128,7 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useMenuStore } from '@/stores/menu'
+import { useAppStore } from '@/stores/app'
 import { 
   Fold, 
   Expand,
@@ -87,8 +150,41 @@ const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 const menuStore = useMenuStore()
+const appStore = useAppStore()
 const search = ref("")
 const collapse = ref(false)
+const allNotificationsDialogVisible = ref(false)
+
+// 模拟通知数据
+const notifications = ref([
+  {
+    id: 1,
+    title: '系统更新：新增学情分析功能',
+    time: '2025-04-15',
+    read: false
+  },
+  {
+    id: 2,
+    title: '教育部关于加强中小学课堂教学改革的通知',
+    time: '2025-04-10',
+    read: false
+  },
+  {
+    id: 3,
+    title: '本周教研活动安排',
+    time: '2025-04-08',
+    read: true
+  },
+  {
+    id: 4,
+    title: '智能备课系统使用指南已发布',
+    time: '2025-04-05',
+    read: true
+  }
+])
+
+// 计算未读通知数量
+const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
 
 // 获取用户信息
 const user = userStore.user
@@ -214,19 +310,42 @@ function handleCommand(command) {
   if (command === "profile") {
     router.push("/profile")
   } else if (command === "password") {
-    if (window && window.$bus) {
-      window.$bus.$emit('password', true)
-    }
+    router.push({ path: '/profile', hash: '#security' })
   } else if (command === "lock") {
-    if (window && window.$bus) {
-      window.$bus.$emit('lock', 1)
-    }
+    appStore.toggleLock(true)
   } else if (command === "logout") {
     // 退出登录
     userStore.setToken("")
     userStore.setUser("")
     router.push("/login")
   }
+}
+
+// 处理通知点击
+function handleNotificationClick(item) {
+  item.read = true
+  // 实际应用中可能需要跳转到通知详情页
+  console.log('Clicked notification:', item)
+}
+
+// 标记全部已读
+function markAllRead() {
+  notifications.value.forEach(item => item.read = true)
+}
+
+// 查看全部通知
+function viewAllNotifications() {
+  allNotificationsDialogVisible.value = true
+}
+
+// 在对话框中标记单个通知为已读
+function markSingleRead(item) {
+  item.read = true
+}
+
+// 在对话框中标记全部为已读
+function markAllReadInDialog() {
+  markAllRead()
 }
 </script>
 
@@ -289,7 +408,7 @@ function handleCommand(command) {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0;
+  padding: 0 20px; /* 保持左右边距 */
   box-sizing: border-box;
   height: 100%;
 }
@@ -298,22 +417,56 @@ function handleCommand(command) {
   display: flex;
   align-items: center;
   width: 100%;
-  max-width: 600px;
-  padding: 0 20px;
+  max-width: 500px; /* 稍微减小最大宽度 */
+  background-color: #f0f2f5; /* 浅灰色背景 */
+  border-radius: 20px; /* 圆角 */
+  padding: 4px 4px 4px 15px; /* 内边距调整，左侧多一点给图标 */
   box-sizing: border-box;
+  height: 40px; /* 增加整体高度 */
+  transition: box-shadow 0.3s ease, background-color 0.3s ease; /* 添加过渡效果 */
+}
+
+.search-container:hover {
+  background-color: #e9ecef; /* 悬停时稍变深 */
+}
+
+.search-container:focus-within {
+  background-color: #fff; /* 输入时变白 */
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2); /* 输入时添加蓝色外发光 */
 }
 
 .search-input {
   flex: 1;
+  height: 100%; /* 填充容器高度 */
 }
 
+/* 深入修改 Element Plus 输入框内部样式 */
 .search-input :deep(.el-input__wrapper) {
-  border-radius: 4px 0 0 4px;
-  box-shadow: 0 0 0 1px #dcdfe6 inset;
+  background-color: transparent !important; /* 使背景透明 */
+  box-shadow: none !important; /* 移除默认阴影 */
+  border-radius: 0; /* 移除内部圆角 */
+  padding: 0 10px 0 0; /* 移除内部左右边距，右侧留一点 */
+  height: 100%; /* 填充容器高度 */
+  font-size: 14px; /* 调整字体大小 */
+}
+
+/* 如果需要调整图标位置 */
+.search-input :deep(.el-input__prefix) {
+  /* 可能需要微调 */
+}
+
+.search-input :deep(.el-input__inner) {
+  color: #303133; /* 输入文字颜色 */
 }
 
 .search-btn {
-  border-radius: 0 4px 4px 0;
+  border-radius: 16px; /* 按钮圆角，比容器略小 */
+  height: 32px; /* 按钮高度 */
+  padding: 0 20px; /* 按钮内边距 */
+  border: none; /* 移除按钮边框 */
+  margin-left: 5px; /* 和输入框稍微隔开 */
+  /* 可以考虑更柔和的颜色 */
+  /* background-color: #5a9cf8; */
 }
 
 /* 右侧用户区域 */
@@ -369,5 +522,143 @@ function handleCommand(command) {
 
 :deep(.el-dropdown-menu__item i) {
   margin-right: 5px;
+}
+
+/* 通知 Popover 样式 */
+.notification-popover {
+  display: flex;
+  flex-direction: column;
+}
+
+.popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ebeef5;
+  font-size: 14px;
+}
+
+.popover-header span {
+  font-weight: 500;
+}
+
+.no-notifications {
+  text-align: center;
+  color: #909399;
+  padding: 20px;
+  font-size: 13px;
+}
+
+.notification-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f2f5;
+  transition: background-color 0.2s;
+}
+
+.notification-item:hover {
+  background-color: #f5f7fa;
+}
+
+.notification-item.is-read {
+  color: #909399;
+}
+
+.notification-item.is-read .notification-title {
+  font-weight: normal;
+}
+
+.notification-title {
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 4px;
+  font-weight: 500;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.notification-time {
+  font-size: 12px;
+  color: #b0b3b8;
+}
+
+.popover-footer {
+  text-align: center;
+  padding: 8px 12px;
+  border-top: 1px solid #ebeef5;
+}
+
+/* 调整 el-scrollbar 的内边距 */
+:deep(.el-scrollbar__view) {
+  padding: 0 !important; /* 清除 el-scrollbar 可能的默认内边距 */
+}
+
+/* 全部通知对话框样式 */
+.all-notifications-dialog :deep(.el-dialog__body) {
+  padding: 0; /* 去除 body 的内边距，由内部的 scrollbar 控制 */
+}
+
+.dialog-content {
+  /* 可以添加一些内边距，如果需要的话 */
+}
+
+.no-notifications-dialog {
+  text-align: center;
+  color: #909399;
+  padding: 40px 20px;
+  font-size: 14px;
+}
+
+.notification-list-dialog {
+  padding: 10px 0;
+}
+
+.notification-item-dialog {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid #f0f2f5;
+  transition: background-color 0.2s;
+}
+
+.notification-item-dialog:hover {
+  background-color: #f5f7fa;
+}
+
+.notification-item-dialog.is-read {
+  color: #909399;
+}
+
+.notification-item-dialog.is-read .notification-title-dialog {
+  font-weight: normal;
+  color: #909399;
+}
+
+.notification-content-dialog {
+  flex: 1;
+  margin-right: 15px;
+}
+
+.notification-title-dialog {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #303133;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.notification-time-dialog {
+  font-size: 12px;
+  color: #b0b3b8;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>

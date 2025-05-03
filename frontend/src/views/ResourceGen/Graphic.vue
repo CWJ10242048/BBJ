@@ -152,7 +152,24 @@
           <el-input v-model="form.subject" placeholder="请输入适用学科" :class="{ 'typing-effect': isTyping }" />
         </el-form-item>
         <el-form-item label="知识点" prop="knowledge">
-          <el-input v-model="form.knowledge" placeholder="请输入知识点" :class="{ 'typing-effect': isTyping }" />
+          <el-select 
+            v-model="form.knowledge" 
+            multiple 
+            filterable 
+            allow-create 
+            default-first-option
+            clearable
+            placeholder="选择或输入知识点"
+            style="width: 100%"
+            :class="{ 'typing-effect': isTyping }"
+          >
+            <el-option 
+              v-for="item in machineLearningKnowledgePoints" 
+              :key="item.value" 
+              :label="item.label" 
+              :value="item.value" 
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="自定义要求">
           <el-input 
@@ -184,24 +201,119 @@
            <div class="preview-content">
              <h2>生成配置预览 ({{ form.resourceType === 'image' ? '图片' : '视频' }})</h2>
              <el-descriptions :column="1" border>
-               <el-descriptions-item label="资源类型">{{ form.resourceType === 'image' ? '图片' : '视频' }}</el-descriptions-item>
-               <el-descriptions-item label="适用学科">{{ form.subject }}</el-descriptions-item>
-               <el-descriptions-item label="知识点">{{ form.knowledge }}</el-descriptions-item>
+               <el-descriptions-item label="资源类型">
+                 <el-tag :type="form.resourceType === 'image' ? 'success' : 'warning'" size="small" round>
+                   <el-icon style="margin-right: 3px;">
+                     <component :is="form.resourceType === 'image' ? Picture : VideoPlay" />
+                   </el-icon>
+                   {{ form.resourceType === 'image' ? '图片' : '视频' }}
+                 </el-tag>
+               </el-descriptions-item>
+               <el-descriptions-item label="适用学科">
+                 <el-tag type="info" size="small" round v-if="form.subject">{{ form.subject }}</el-tag>
+                 <span v-else>未指定</span>
+               </el-descriptions-item>
+               <el-descriptions-item label="知识点">
+                 <el-tag
+                   v-for="knowledgeTag in form.knowledge"
+                   :key="knowledgeTag"
+                   :type="getResourceTagInfo(`知识点-${knowledgeTag}`, form.resourceType).type"
+                   size="small"
+                   round
+                   style="margin-right: 5px; margin-bottom: 5px; display: inline-flex; align-items: center;"
+                 >
+                   <el-icon style="margin-right: 3px;"><component :is="getResourceTagInfo(`知识点-${knowledgeTag}`, form.resourceType).icon" /></el-icon>
+                   {{ getResourceTagInfo(`知识点-${knowledgeTag}`, form.resourceType).label }}
+                 </el-tag>
+                 <span v-if="!form.knowledge || form.knowledge.length === 0">未指定</span>
+               </el-descriptions-item>
 
                <template v-if="form.resourceType === 'image'">
-                 <el-descriptions-item label="图片类型">{{ form.imageType.join(', ') }}</el-descriptions-item>
-                 <el-descriptions-item label="图片大小">{{ sizeText }}</el-descriptions-item>
-                 <el-descriptions-item label="风格">{{ form.imageStyle.join(', ') }}</el-descriptions-item>
-                 <el-descriptions-item label="参考图片文件">
-                   <span v-if="form.imageFile.length">已上传文件: {{ form.imageFile.map(f=>f.name).join(', ') }}</span>
-                   <pre v-else class="desc-pre">{{ form.imageDesc || '无' }}</pre>
-               </el-descriptions-item>
+                 <el-descriptions-item label="图片类型">
+                   <el-tag
+                     v-for="typeTag in form.imageType"
+                     :key="typeTag"
+                     :type="getResourceTagInfo(`图片类型-${typeTag}`, 'image').type"
+                     size="small"
+                     round
+                     style="margin-right: 5px; margin-bottom: 5px; display: inline-flex; align-items: center;"
+                   >
+                     <el-icon style="margin-right: 3px;"><component :is="getResourceTagInfo(`图片类型-${typeTag}`, 'image').icon" /></el-icon>
+                     {{ getResourceTagInfo(`图片类型-${typeTag}`, 'image').label }}
+                   </el-tag>
+                   <span v-if="!form.imageType || form.imageType.length === 0">未指定</span>
+                 </el-descriptions-item>
+                 <el-descriptions-item label="图片大小">
+                   <el-tag
+                     v-if="sizeText"
+                     :type="getResourceTagInfo(`尺寸-${sizeText}`, 'image').type"
+                     size="small"
+                     round
+                     style="margin-right: 5px; margin-bottom: 5px; display: inline-flex; align-items: center;"
+                   >
+                     <el-icon style="margin-right: 3px;"><component :is="getResourceTagInfo(`尺寸-${sizeText}`, 'image').icon" /></el-icon>
+                     {{ getResourceTagInfo(`尺寸-${sizeText}`, 'image').label }}
+                   </el-tag>
+                   <span v-else>未指定</span>
+                 </el-descriptions-item>
+                 <el-descriptions-item label="风格">
+                   <el-tag
+                     v-for="styleTag in form.imageStyle"
+                     :key="styleTag"
+                     :type="getResourceTagInfo(`风格-${styleTag}`, 'image').type"
+                     size="small"
+                     round
+                     style="margin-right: 5px; margin-bottom: 5px; display: inline-flex; align-items: center;"
+                   >
+                     <el-icon style="margin-right: 3px;"><component :is="getResourceTagInfo(`风格-${styleTag}`, 'image').icon" /></el-icon>
+                     {{ getResourceTagInfo(`风格-${styleTag}`, 'image').label }}
+                   </el-tag>
+                   <span v-if="!form.imageStyle || form.imageStyle.length === 0">未指定</span>
+                 </el-descriptions-item>
+                 <el-descriptions-item label="图片描述/需求"><pre class="desc-pre">{{ form.imageDesc || '无' }}</pre></el-descriptions-item>
                </template>
 
                <template v-if="form.resourceType === 'video'">
-                 <el-descriptions-item label="视频时长">{{ form.videoDuration }} 秒</el-descriptions-item>
-                 <el-descriptions-item label="画面比例">{{ form.videoAspectRatio }}</el-descriptions-item>
-                 <el-descriptions-item label="视频风格">{{ form.videoStyle.join(', ') }}</el-descriptions-item>
+                  <el-descriptions-item label="视频时长">
+                    <el-tag
+                      v-if="form.videoDuration"
+                      :type="getResourceTagInfo(`时长-${form.videoDuration}`, 'video').type"
+                      size="small"
+                      round
+                      style="margin-right: 5px; margin-bottom: 5px; display: inline-flex; align-items: center;"
+                    >
+                      <el-icon style="margin-right: 3px;"><component :is="getResourceTagInfo(`时长-${form.videoDuration}`, 'video').icon" /></el-icon>
+                      {{ getResourceTagInfo(`时长-${form.videoDuration}`, 'video').label }}
+                    </el-tag>
+                    <span v-else>未指定</span>
+                  </el-descriptions-item>
+                 <el-descriptions-item label="画面比例">
+                   <el-tag
+                     v-if="form.videoAspectRatio"
+                     :type="getResourceTagInfo(`比例-${form.videoAspectRatio}`, 'video').type"
+                     size="small"
+                     round
+                     style="margin-right: 5px; margin-bottom: 5px; display: inline-flex; align-items: center;"
+                   >
+                     <el-icon style="margin-right: 3px;"><component :is="getResourceTagInfo(`比例-${form.videoAspectRatio}`, 'video').icon" /></el-icon>
+                     {{ getResourceTagInfo(`比例-${form.videoAspectRatio}`, 'video').label }}
+                   </el-tag>
+                   <span v-else>未指定</span>
+                 </el-descriptions-item>
+                 <el-descriptions-item label="视频风格">
+                   <el-tag
+                     v-for="styleTag in form.videoStyle"
+                     :key="styleTag"
+                     :type="getResourceTagInfo(`视频风格-${styleTag}`, 'video').type"
+                     size="small"
+                     round
+                     style="margin-right: 5px; margin-bottom: 5px; display: inline-flex; align-items: center;"
+                   >
+                     <el-icon style="margin-right: 3px;"><component :is="getResourceTagInfo(`视频风格-${styleTag}`, 'video').icon" /></el-icon>
+                     {{ getResourceTagInfo(`视频风格-${styleTag}`, 'video').label }}
+                   </el-tag>
+                   <span v-if="!form.videoStyle || form.videoStyle.length === 0">未指定</span>
+                 </el-descriptions-item>
                  <el-descriptions-item label="脚本/提示词"><pre class="desc-pre">{{ form.videoScript || '无' }}</pre></el-descriptions-item>
                </template>
 
@@ -215,10 +327,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, defineEmits, onMounted } from 'vue'
+import { ref, computed, watch, defineEmits, onMounted, nextTick } from 'vue'
 import { ElMessage, type UploadUserFile, type UploadFile, type FormInstance, type FormItemRule, type UploadProps, type FormRules } from 'element-plus'
 import axios from 'axios'
-import { MagicStick } from '@element-plus/icons-vue'
+import { 
+  MagicStick, Picture, VideoPlay, 
+  // Import necessary icons from PPT.vue
+  Clock, Film, VideoCamera, Guide, SetUp, DataAnalysis, Collection, FullScreen, Brush, Rank, Document 
+} from '@element-plus/icons-vue'
 
 // Define emit function (generate might not be needed if standalone only, but keep for now)
 const emit = defineEmits(['generate', 'cancel'])
@@ -252,7 +368,7 @@ interface HistoryPlan {
 interface FormState {
   resourceType: 'image' | 'video';
   subject: string;
-  knowledge: string;
+  knowledge: string[];
   custom: string;
   imageType: string[];
   size: string;
@@ -315,7 +431,7 @@ const stageOptions = computed(() => {
 const form = ref<FormState>({
   resourceType: 'image',
   subject: '',
-  knowledge: '',
+  knowledge: [],
   custom: '',
   
   imageType: [],
@@ -334,8 +450,8 @@ const form = ref<FormState>({
 
 const rules = computed((): FormRules => ({
   resourceType: [{ required: true, message: '请选择资源类型', trigger: 'change' }],
-  subject: [{ required: true, message: '请输入适用学科', trigger: 'blur' }],
-  knowledge: [{ required: true, message: '请输入知识点', trigger: 'blur' }],
+  subject: [{ required: true, message: '请选择教案以填充学科', trigger: 'change' }],
+  knowledge: [{ required: true, type: 'array', message: '请选择或输入知识点', trigger: 'change' }],
   imageType: [{ required: form.value.resourceType === 'image', message: '请选择图片类型', trigger: 'change' }],
   size: [{ required: form.value.resourceType === 'image', message: '请选择图片大小', trigger: 'change' }],
   imageStyle: [{ required: form.value.resourceType === 'image', message: '请选择风格', trigger: 'change' }],
@@ -347,7 +463,7 @@ const rules = computed((): FormRules => ({
 
 // --- Lifecycle ---
 onMounted(() => {
-  console.log("[Graphic.vue] Mounted in standalone mode.");
+  console.log("[Graphic.vue] Mounted.");
   // fetchHistoryPlans(); // No need to call this if using static data above
 });
 
@@ -388,17 +504,17 @@ const formatDate = (dateString: string) => {
 // Handle Plan Change (Keep this)
 const handlePlanChange = (planId: string | number) => {
   selectedStageId.value = '';
-  form.value.knowledge = '';
+  form.value.knowledge = [];
   form.value.imageDesc = '';
   form.value.videoScript = '';
 
   const selectedPlan = historyPlans.value.find(p => p.id === planId);
   if (selectedPlan) {
     selectedPlanStructure.value = selectedPlan.content; 
-    form.value.subject = selectedPlan.content?.subject || ''; 
+    form.value.subject = selectedPlan.content?.subject || '';
   } else {
     selectedPlanStructure.value = null;
-    form.value.subject = ''; // Clear subject if plan not found
+    form.value.subject = '';
   }
 }
 
@@ -407,9 +523,9 @@ const handleStageChange = (stageId: string | number) => {
   const stage = selectedPlanStructure.value?.stages.find((s: Stage) => s.id === stageId);
   
   if (stage) {
-    form.value.knowledge = stage.name;
+    form.value.knowledge = [stage.name];
   } else {
-    form.value.knowledge = '';
+    form.value.knowledge = [];
     form.value.imageDesc = '';
     form.value.videoScript = '';
   }
@@ -454,8 +570,13 @@ const handleSave = async () => {
         custom: form.value.custom,
       };
       await new Promise(resolve => setTimeout(resolve, 1000));
-      resultUrl = `https://via.placeholder.com/400x300.png?text=Generated+Image+(${form.value.imageType.join('+')})`;
-      details = { imageTypes: form.value.imageType };
+      resultUrl = `https://via.placeholder.com/400x300.png?text=Image:${encodeURIComponent(form.value.knowledge.join('+'))}`;
+      details = { 
+        imageTypes: form.value.imageType,
+        knowledge: form.value.knowledge,
+        imageStyle: form.value.imageStyle,
+        size: sizeText.value
+      };
       ElMessage.success('图片生成成功');
 
     } else if (resourceType === 'video') {
@@ -470,8 +591,14 @@ const handleSave = async () => {
          custom: form.value.custom,
        };
       await new Promise(resolve => setTimeout(resolve, 2000));
-      resultUrl = `https://via.placeholder.com/320x180.png/000000/FFFFFF/?text=Generated+Video`;
-      details = { duration: form.value.videoDuration, script: form.value.videoScript };
+      resultUrl = `https://via.placeholder.com/320x180.png/000000/FFFFFF/?text=Video:${encodeURIComponent(form.value.knowledge.join('+'))}`;
+      details = { 
+        duration: form.value.videoDuration,
+        script: form.value.videoScript, 
+        knowledge: form.value.knowledge,
+        videoStyle: form.value.videoStyle,
+        videoAspectRatio: form.value.videoAspectRatio
+      };
       ElMessage.success('视频生成成功');
     }
 
@@ -534,8 +661,8 @@ const handleReset = () => {
   // 手动重置其他字段和默认值
   form.value = {
     resourceType: 'image',
-    subject: '', // 会在选择教案时重新填充
-    knowledge: '',
+    subject: '',
+    knowledge: [],
     custom: '',
     imageType: [],
     size: '1024x768',
@@ -552,206 +679,203 @@ const handleReset = () => {
   // 清除可能残留的文件列表等
 }
 
-// --- AI Fill Handler (Keep this, it's for standalone) ---
+// --- AI Fill Handler (Strictly mimicking PPT.vue logic) ---
 const handleAiFillOptions = async () => {
   if (!selectedStageId.value || !selectedPlanStructure.value) {
     ElMessage.warning('请先选择一个教学环节');
     return;
   }
-  
-  const stage = selectedPlanStructure.value.stages.find(s => s.id === selectedStageId.value);
-  if (!stage || !stage.name) {
-    ElMessage.error('未能找到选定的环节信息或环节名称');
-    return;
-  }
-
-  // Reset potential previous error states if any?
-  // ElMessage.closeAll(); // Optional: Close previous messages
 
   isAiFilling.value = true;
-  console.log(`[AI Fill Debug] Started for stage: ${stage.name}. isAiFilling: ${isAiFilling.value}`);
+  const stage = selectedPlanStructure.value.stages.find(s => s.id === selectedStageId.value);
+
+  if (!stage) {
+      ElMessage.error('未能找到选定的环节信息');
+      isAiFilling.value = false;
+      return;
+  }
+
+  console.log(`[AI Fill Debug - PPT Strict Mimic] Started for stage: ${stage.name}. isAiFilling: ${isAiFilling.value}`);
 
   try {
-    console.log("[AI Fill Debug] Entering try block.");
-    // 查找预设配置
-    const preset = presetOptionsMap[stage.name] || presetOptionsMap['默认'];
-    console.log(`[AI Fill Debug] Using preset for: ${preset ? stage.name : '默认'}`);
+    // Use the getPresetResourceInfo function (copied from PPT.vue)
+    const preset = getPresetResourceInfo(stage.name);
+    console.log(`[AI Fill Debug - PPT Strict Mimic] Using preset from getPresetResourceInfo for: ${stage.name}`, preset);
 
-    // -- Start Assignments --
-    if (preset) {
-      console.log("[AI Fill Debug] Applying preset...");
-      // Assign common fields first
-      form.value.subject = selectedPlanStructure.value?.subject || '未知学科';
-      form.value.knowledge = stage.name;
-      
-      // Assign preset fields 
-      const presetValues = preset as Partial<FormState>;
-      if (presetValues.resourceType !== undefined) form.value.resourceType = presetValues.resourceType;
-      if (presetValues.imageType !== undefined) form.value.imageType = [...presetValues.imageType];
-      if (presetValues.imageStyle !== undefined) form.value.imageStyle = [...presetValues.imageStyle];
-      if (presetValues.size !== undefined) form.value.size = presetValues.size;
-      if (presetValues.imageDesc !== undefined) form.value.imageDesc = presetValues.imageDesc;
-      if (presetValues.videoDuration !== undefined) form.value.videoDuration = presetValues.videoDuration;
-      if (presetValues.videoAspectRatio !== undefined) form.value.videoAspectRatio = presetValues.videoAspectRatio;
-      if (presetValues.videoStyle !== undefined) form.value.videoStyle = [...presetValues.videoStyle];
-      if (presetValues.videoScript !== undefined) form.value.videoScript = presetValues.videoScript;
-      console.log("[AI Fill Debug] Assignments complete.");
+    // --- Apply Preset to form.value (Mimicking PPT.vue dialogForm) ---
+    // Set Subject first
+    form.value.subject = '机器学习'; // Force subject as requested previously
+    console.log(`[AI Fill Debug - PPT Strict Mimic] Assigned Subject: ${form.value.subject}`);
+
+    // --- Knowledge Point Assignment (Strictly mimicking PPT.vue) ---
+    const stageContext = stage.desc || stage.name; // Use description first, then name
+    console.log(`[AI Fill Debug - PPT Strict Mimic] Context for Knowledge (desc || name): '${stageContext}'`);
+
+    let foundKnowledge = machineLearningKnowledgePoints.value
+                          .filter(kp => {
+                              const contextLower = stageContext.toLowerCase();
+                              const kpLower = kp.value.toLowerCase();
+                              const isIncluded = contextLower.includes(kpLower);
+                              console.log(`[AI Fill Debug - PPT Strict Mimic] Comparing context with '${kp.value}': ${isIncluded}`);
+                              return isIncluded;
+                           })
+                           .map(kp => kp.value);
+                           
+    console.log('[AI Fill Debug - PPT Strict Mimic] Raw foundKnowledge array before assignment:', JSON.parse(JSON.stringify(foundKnowledge)));
+
+    // Wrap assignment in nextTick
+    await nextTick(); 
+
+    if (foundKnowledge.length === 0) {
+        // Mimic PPT: Use context as custom tag if no match
+        console.log('[AI Fill Debug - PPT Strict Mimic] No predefined knowledge match found. Using context as custom knowledge point.');
+        form.value.knowledge = [stageContext]; 
     } else {
-       console.warn("[AI Fill Debug] No preset found, assignments skipped.");
-    }
-    // -- End Assignments --
-    
-    // Short delay 
-    console.log("[AI Fill Debug] Starting final delay...");
-    await sleep(150); // Slightly longer delay to ensure reactivity settles?
-    console.log("[AI Fill Debug] Finished final delay.");
-
-    // Check state before success message
-    if (!isAiFilling.value) {
-        console.warn("[AI Fill Debug] isAiFilling became false unexpectedly before success message!");
+        console.log('[AI Fill Debug - PPT Strict Mimic] Found predefined knowledge points:', foundKnowledge);
+        form.value.knowledge = foundKnowledge; // Direct assignment, exactly like PPT.vue
     }
 
-    console.log("[AI Fill Debug] Attempting to show success message.");
-    ElMessage.success('AI已填充选项'); 
-    console.log(`[AI Fill Debug] Success message should be visible now.`);
+    // Log after potential assignment (might log before nextTick completes if assignment is async?)
+    console.log('[AI Fill Debug - PPT Strict Mimic] Final assigned knowledge in form state (immediately after assignment):', JSON.parse(JSON.stringify(form.value.knowledge)));
 
-  } catch (caughtValue) {
-    // Log the type and value of whatever was caught
-    console.error("[AI Fill Debug] Error caught! Type:", typeof caughtValue, "Value:", caughtValue);
-    ElMessage.error('AI填充失败，请检查控制台获取详细信息'); 
+    // Assign resource type from preset or default to 'image'
+    form.value.resourceType = (preset?.resourceType as 'image' | 'video') || 'image';
+    console.log(`[AI Fill Debug - PPT Strict Mimic] Assigned Resource Type: ${form.value.resourceType}`);
+
+    // Assign specific fields and generate desc/script AFTER knowledge is set
+    if (form.value.resourceType === 'image') {
+      form.value.imageType = preset?.types ? [...preset.types] : [];
+      form.value.imageStyle = preset?.style ? [...preset.style] : [];
+      form.value.size = (preset as any)?.size || '1024x768'; 
+      form.value.imageDesc = `为知识点 "${form.value.knowledge.join(', ')}" 生成相关的${form.value.imageType.join('或') || '图片'}，风格偏向${form.value.imageStyle.join('、') || '通用'}。`;
+      // Reset video fields
+      form.value.videoDuration = 60;
+      form.value.videoAspectRatio = '16:9';
+      form.value.videoStyle = [];
+      form.value.videoScript = '';
+      console.log('[AI Fill Debug - PPT Strict Mimic] Applied Image Presets');
+    } else { // resourceType is 'video'
+      form.value.videoStyle = preset?.types ? [...preset.types] : [];
+      form.value.videoDuration = preset?.duration || 60; // Use duration from preset, assign to videoDuration
+      form.value.videoAspectRatio = (preset as any)?.videoAspectRatio || '16:9';
+      form.value.videoScript = `制作一个关于 "${form.value.knowledge.join(', ')}" 的教学${form.value.videoStyle.join('或') || '视频'}，时长约${form.value.videoDuration}秒。`;
+      // Reset image fields
+      form.value.imageType = [];
+      form.value.size = '1024x768';
+      form.value.imageStyle = [];
+      form.value.imageDesc = '';
+      console.log('[AI Fill Debug - PPT Strict Mimic] Applied Video Presets');
+    }
+    form.value.custom = ''; // Reset custom
+
+    // Simulate AI thinking
+    await sleep(300); 
+    ElMessage.success('AI已填充生成选项');
+
+  } catch (error) {
+    console.error("AI填充失败 (Graphic.vue - PPT Strict Mimic Logic):", error);
+    ElMessage.error('AI填充选项时出错');
   } finally {
-    console.log(`[AI Fill Debug] Entering finally block. Current isAiFilling: ${isAiFilling.value}`);
     isAiFilling.value = false;
-    console.log(`[AI Fill Debug] Finished. isAiFilling set to: ${isAiFilling.value}`);
+    console.log('[AI Fill Debug - PPT Strict Mimic] Finished AI Fill.');
   }
+}; // End of handleAiFillOptions function
+
+// --- getPresetResourceInfo function (Copied from PPT.vue) ---
+const getPresetResourceInfo = (title: string): { resourceType: string; types: string[]; duration?: number; style?: string[] } => {
+    const lowerTitle = title.toLowerCase();
+    // Add suggested styles to presets where applicable
+    if (lowerTitle.includes('复习') || lowerTitle.includes('总结')) {
+      return { resourceType: 'image', types: ['思维导图', '概念图'], style: ['简约', '清晰'] };
+    } else if (lowerTitle.includes('导入') || lowerTitle.includes('引入')) {
+      return { resourceType: 'video', types: ['动画科普', '快速剪辑'], duration: 45 };
+    } else if (lowerTitle.includes('讲解新知') || lowerTitle.includes('梯度下降')) {
+      return { resourceType: 'video', types: ['教学演示', '动画科普'], duration: 90 };
+    } else if (lowerTitle.includes('讲解') || lowerTitle.includes('讲授')) {
+      return { resourceType: 'image', types: ['概念图', '流程图'], style: ['专业', '清晰'] };
+    } else if (lowerTitle.includes('案例分析')) {
+      return { resourceType: 'image', types: ['数据图表', '示意图'], style: ['专业', '数据驱动'] };
+    } else if (lowerTitle.includes('练习')) {
+      return { resourceType: 'image', types: ['示意图'], style: ['简洁'] };
+    } else if (lowerTitle.includes('互动') || lowerTitle.includes('讨论')) {
+      return { resourceType: 'video', types: ['教学演示(模拟)'], duration: 60 };
+    } else {
+      return { resourceType: 'image', types: ['示意图'], style: ['通用'] }; // Default
+    }
 }
 
-// --- Preset map (Keep this) ---
-const presetOptionsMap: Record<string, Partial<FormState>> = {
-  '复习旧知': {
-    resourceType: 'image',
-    imageType: ['思维导图', '概念图'],
-    imageStyle: ['简约', '清晰'],
-    size: '1920x1080',
-    imageDesc: `## 配图需求：复习旧知
+// --- Predefined Knowledge Points (Copied from PPT.vue) ---
+const machineLearningKnowledgePoints = ref([
+  { value: '线性回归', label: '线性回归' },
+  { value: '逻辑回归', label: '逻辑回归' },
+  { value: '支持向量机 (SVM)', label: '支持向量机 (SVM)' },
+  { value: '决策树', label: '决策树' },
+  { value: '随机森林', label: '随机森林' },
+  { value: '神经网络', label: '神经网络' },
+  { value: '深度学习', label: '深度学习' },
+  { value: '聚类 (K-Means)', label: '聚类 (K-Means)' },
+  { value: '降维 (PCA)', label: '降维 (PCA)' },
+  { value: '梯度下降', label: '梯度下降' },
+  { value: '损失函数', label: '损失函数' },
+  { value: '过拟合与欠拟合', label: '过拟合与欠拟合' },
+  { value: '正则化 (L1/L2)', label: '正则化 (L1/L2)' },
+  { value: '交叉验证', label: '交叉验证' },
+  { value: '模型评估指标', label: '模型评估指标' },
+  { value: '特征工程', label: '特征工程' },
+  { value: '监督学习', label: '监督学习' },
+  { value: '无监督学习', label: '无监督学习' },
+  { value: '强化学习', label: '强化学习' },
+]);
 
-**核心内容:** 回顾上节课重点概念、公式、流程。
-**视觉元素:**
-  - 使用思维导图梳理知识体系结构。
-  - 或用概念图清晰展示关键点及其联系。
-  - 突出显示核心术语。
-**风格要求:** 简洁、清晰、专业。`
-  },
-  '导入新课': {
-    resourceType: 'video', // Usually better for engagement
-    videoDuration: 45,
-    videoAspectRatio: '16:9',
-    videoStyle: ['动画科普', '快速剪辑'],
-    videoScript: `### 视频脚本：导入新课
-
-**时长:** 约 45 秒
-**画面:** 16:9
-**风格:** 动画科普 / 快速剪辑
-
-**(画面示例)**
-1.  **(0-5s)** 引人入胜的片头/问题提出 (如: [与主题相关的疑问句?])
-2.  **(5-20s)** 快速展示与主题相关的生动场景/案例/痛点 (如: [房价飞涨图表], [代码运行错误截图])
-3.  **(20-35s)** 点出本节课要解决的核心问题或学习主题 (如: 如何预测房价? 如何调试代码?)
-4.  **(35-45s)** 清晰展示本节课学习目标 (字幕叠加) + Logo/课程信息结尾。
-
-**旁白/字幕:** 简洁有力，激发好奇心，明确目标，节奏快。`
-  },
-  '讲解新知': {
-    resourceType: 'video',
-    videoDuration: 90,
-    videoAspectRatio: '16:9',
-    videoStyle: ['教学演示', '动画科普'],
-    videoScript: `### 视频脚本：讲解新知
-
-**时长:** 约 90 秒
-**画面:** 16:9
-**风格:** 教学演示 / 动画科普
-
-**(内容结构示例)**
-1.  **引入概念:** 清晰定义核心概念。
-2.  **原理阐述:** 使用动画/图表/模型逐步解释原理或步骤。
-3.  **实例演示:** 结合简单实例进行演示说明 (如公式推导、代码片段、操作流程)。
-4.  **要点总结:** 再次强调关键点或注意事项。
-
-**视觉要求:** 图文并茂，逻辑清晰，重点突出，专业准确。`
-  },
-  '讲解新知 - 梯度下降': { 
-    resourceType: 'video',
-    videoDuration: 120,
-    videoAspectRatio: '16:9',
-    videoStyle: ['动画科普', '教学演示'],
-    videoScript: `### 视频脚本：讲解梯度下降
-
-**时长:** 约 120 秒
-**画面:** 16:9
-**风格:** 动画科普 / 教学演示
-
-**(内容&镜头建议)**
-1.  **(引入)** 展示损失函数的三维/二维可视化图形。
-2.  **(核心原理)** 动画演示：一个小球如何沿着梯度的反方向逐步滚下山坡（损失函数曲面），到达最低点。
-3.  **(关键要素)** 逐步解释：代价函数 J(θ)、梯度 ∇J、学习率 α 的含义和作用。
-4.  **(迭代过程)** 展示参数更新公式 θ := θ - α * ∇J，并通过简单数值示例演示几次迭代。
-5.  **(学习率影响)** 可视化对比不同学习率（过大/过小/合适）下的收敛情况。
-6.  **(总结)** 强调梯度下降是寻找函数最小值的常用优化算法。`
-  },
-  '案例分析': {
-    resourceType: 'image', // Often needs static display for analysis
-    imageType: ['数据图表', '示意图', '流程图'],
-    imageStyle: ['专业', '清晰'],
-    size: '1024x768',
-    imageDesc: `## 配图需求：案例分析
-
-**核心内容:** 展示案例背景、相关数据、分析/处理步骤、最终结果。
-**视觉元素:**
-  - **数据图表:** (如折线图、柱状图、散点图) 展示数据趋势、分布或对比。
-  - **流程图:** 清晰展示分析或处理的步骤。
-  - **示意图:** 展示案例场景、系统架构或关键对象关系。
-**风格要求:** 专业、清晰、准确，便于理解分析过程。`
-  },
-   '练习': { // Added preset for '练习'
-     resourceType: 'image',
-     imageType: ['示意图', '流程图'],
-     imageStyle: ['清晰', '简约'],
-     size: '1024x768',
-     imageDesc: `## 配图需求：练习
-
-**核心内容:** 提供与练习题目相关的视觉辅助信息。
-**视觉元素:**
-  - **示意图:** 展示题目描述的场景、对象或数据结构。
-  - **流程图:** (可选) 提供解题思路或关键步骤的提示。
-**风格要求:** 清晰、简洁，避免干扰，辅助理解题意。`
-   },
-  '总结提升': {
-    resourceType: 'image',
-    imageType: ['思维导图', '对比图', '列表图'],
-    imageStyle: ['简约', '清晰'],
-    size: '1920x1080',
-    imageDesc: `## 配图需求：总结提升
-
-**核心内容:** 系统梳理本节课知识要点、关键概念、方法或流程。
-**视觉元素:**
-  - **思维导图:** 构建知识网络，展示整体结构。
-  - **对比图:** 清晰比较不同概念、方法或算法的异同。
-  - **列表图:** 简洁列出核心要点或步骤。
-**风格要求:** 结构清晰、重点突出、简洁明了，便于回顾。`
-  },
-  '默认': { 
-    resourceType: 'image',
-    imageType: ['示意图'],
-    imageStyle: ['简约'],
-    size: '1024x768',
-    imageDesc: '## 通用配图需求\n\n请根据下方知识点和学科信息，生成与教学内容相关的示意图。风格要求简洁明了。'
-  }
-};
-
-// --- Add sleep function definition (if not already present) ---
+// --- Add sleep function definition ---
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// --- New Helper Function for Resource Tag Info (Adapted from PPT.vue) ---
+const getResourceTagInfo = (tagString: string, resourceType: 'image' | 'video'): { icon: any; type: TagType | 'primary'; label: string } => {
+  let icon: any = Document; // Default icon
+  let type: TagType | 'primary' = 'danger'; // Default type
+  let label = tagString; // Default label
+
+  if (tagString.startsWith('图片类型-')) {
+    type = 'success';
+    label = tagString.substring(5); // Adjusted index
+    if (label.includes('思维导图') || label.includes('概念图')) icon = Guide;
+    else if (label.includes('流程图')) icon = SetUp;
+    else if (label.includes('数据图表') || label.includes('对比图')) icon = DataAnalysis;
+    else icon = Picture;
+  } else if (tagString.startsWith('视频风格-')) {
+    type = 'warning';
+    label = tagString.substring(5); // Adjusted index
+    if (label.includes('动画') || label.includes('剪辑')) icon = Film;
+    else if (label.includes('演示') || label.includes('出镜')) icon = VideoCamera;
+    else icon = VideoPlay;
+  } else if (tagString.startsWith('知识点-')) {
+    type = 'primary';
+    label = tagString.substring(4);
+    icon = Collection;
+  } else if (tagString.startsWith('尺寸-')) {
+    type = 'danger';
+    label = tagString.substring(3);
+    icon = Rank;
+  } else if (tagString.startsWith('风格-')) { // This is for Image Style
+    if (resourceType === 'image') { // Only apply if image resource
+      type = 'warning';
+      label = tagString.substring(3);
+      icon = Brush;
+    }
+  } else if (tagString.startsWith('时长-')) {
+    type = 'primary';
+    label = `${tagString.substring(3)}秒`; // Append '秒'
+    icon = Clock;
+  } else if (tagString.startsWith('比例-')) {
+    type = 'success';
+    label = tagString.substring(3);
+    icon = FullScreen;
+  }
+
+  return { icon, type, label };
 }
 </script>
 

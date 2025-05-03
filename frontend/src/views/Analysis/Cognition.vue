@@ -447,7 +447,7 @@ function getRecordLabel(record: string): string {
 }
 .chart-box {
   width: 100%;
-  height: 260px;
+  height: 260px; /* 确保高度一致 */
   background: #f7f8fa;
   border-radius: 8px;
 }

@@ -4,11 +4,27 @@
     <el-card class="box-card">
       <template #header>
         <div class="card-header">
-          <span>数据上传与说明</span>
+          <span>数据说明与诊断</span>
         </div>
       </template>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
-        <el-form-item label="学生答题数据">
+        <el-form-item label="学生答题数据" prop="studentDataOrigin">
+           <el-radio-group v-model="form.studentDataOrigin">
+             <el-radio label="select">选择记录</el-radio>
+             <el-radio label="upload">上传文件</el-radio>
+           </el-radio-group>
+        </el-form-item>
+
+        <el-form-item v-if="form.studentDataOrigin === 'select'" label="选择答题记录" prop="selectedStudentRecord">
+           <!-- 这里暂时使用模拟数据，后续可以替换为从API获取 -->
+           <el-select v-model="form.selectedStudentRecord" placeholder="请选择历史答题记录">
+              <el-option label="软件工程2201班 期末考试" value="swe_2201_final"></el-option>
+              <el-option label="计算机科学2202班 平时作业1" value="cs_2202_hw1"></el-option>
+              <el-option label="网络工程2201班 单元测试2" value="ne_2201_unit2"></el-option>
+           </el-select>
+        </el-form-item>
+
+        <el-form-item v-else label="上传学生文件" prop="studentFileList">
           <el-upload
             class="upload-demo"
             :auto-upload="false"
@@ -16,20 +32,10 @@
             v-model:file-list="form.studentFileList"
             accept=".xlsx,.csv"
           >
-            <el-button size="small" type="primary">上传学生数据</el-button>
+            <el-button size="small" type="primary">选择学生数据文件</el-button>
           </el-upload>
         </el-form-item>
-        <el-form-item label="题目信息文件">
-          <el-upload
-            class="upload-demo"
-            :auto-upload="false"
-            :show-file-list="true"
-            v-model:file-list="form.questionFileList"
-            accept=".xlsx,.csv,.doc,.docx,.pdf"
-          >
-            <el-button size="small" type="primary">上传题目信息</el-button>
-          </el-upload>
-        </el-form-item>
+
         <el-form-item label="诊断说明">
           <el-input v-model="form.desc" type="textarea" :rows="2" placeholder="可填写诊断目的、数据来源、格式说明等" />
         </el-form-item>
@@ -41,102 +47,155 @@
       </div>
     </el-card>
 
-    <div class="button-group">
+    <!-- 结果展示区域 -->
+    <div v-if="analysis.time" class="results-section">
+      <h2>认知诊断分析结果</h2>
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="诊断时间">{{ analysis.time }}</el-descriptions-item>
+        <el-descriptions-item label="诊断模型">{{ analysis.model }}</el-descriptions-item>
+        <el-descriptions-item label="诊断结论" :span="2">
+          <pre class="desc-pre">{{ analysis.conclusion }}</pre>
+        </el-descriptions-item>
+        <el-descriptions-item label="诊断说明" :span="2">
+          <pre class="desc-pre">{{ form.desc }}</pre>
+        </el-descriptions-item>
+        <el-descriptions-item label="学生数据" :span="2">
+          <span v-if="form.studentDataOrigin === 'upload'">{{ form.studentFileList.length ? '已上传文件' : '未上传文件' }}</span>
+          <span v-else>{{ form.selectedStudentRecord ? `已选择记录: ${getRecordLabel(form.selectedStudentRecord)}` : '未选择记录' }}</span>
+        </el-descriptions-item>
+      </el-descriptions>
+      <div class="chart-row">
+        <div class="chart-block">
+          <h3>学生能力分布</h3>
+          <div ref="abilityChartRef" class="chart-box"></div>
+        </div>
+        <div class="chart-block">
+          <h3>学生能力雷达图</h3>
+          <div ref="radarChartRef" class="chart-box"></div>
+        </div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-block">
+          <h3>知识点掌握热力图</h3>
+          <div ref="heatmapChartRef" class="chart-box heatmap-chart-box"></div>
+        </div>
+        <div class="chart-block">
+          <h3>薄弱知识点</h3>
+          <el-table :data="analysis.weakPoints" border size="small" style="width:100%">
+            <el-table-column prop="knowledge" label="知识点" min-width="120" />
+            <el-table-column prop="question" label="题目" min-width="180" />
+            <el-table-column prop="mastery" label="掌握率(%)" width="180">
+              <template #default="scope">
+                <el-progress :percentage="scope.row.mastery" :stroke-width="16" color="#67C23A" :show-text="true" />
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-block">
+          <h3>学生能力分层</h3>
+          <el-table :data="analysis.levels" border size="small" style="width:100%;margin-bottom:0;">
+            <el-table-column prop="level" label="能力层级" width="120" />
+            <el-table-column prop="count" label="学生人数" width="120" />
+            <el-table-column prop="desc" label="层级描述" />
+          </el-table>
+        </div>
+        <div class="chart-block">
+          <h3>知识点掌握分布</h3>
+          <div ref="pieChartRef" class="chart-box"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作按钮区域 -->
+    <div v-if="analysis.time" class="button-group" style="margin-top: 20px;">
       <el-button type="primary" @click="handleSave">保存</el-button>
-      <el-button type="success" @click="handlePreview">预览</el-button>
       <el-button type="warning" @click="handleExport">导出</el-button>
       <el-button @click="handleReset">重置</el-button>
     </div>
-
-    <el-dialog v-model="previewVisible" title="认知诊断结果预览" width="80%" destroy-on-close @opened="onDialogOpened">
-      <div class="preview-content">
-        <h2>认知诊断分析结果</h2>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="诊断时间">{{ analysis.time }}</el-descriptions-item>
-          <el-descriptions-item label="诊断模型">{{ analysis.model }}</el-descriptions-item>
-          <el-descriptions-item label="诊断结论" :span="2">
-            <pre class="desc-pre">{{ analysis.conclusion }}</pre>
-          </el-descriptions-item>
-          <el-descriptions-item label="诊断说明" :span="2">
-            <pre class="desc-pre">{{ form.desc }}</pre>
-          </el-descriptions-item>
-          <el-descriptions-item label="学生数据文件">
-            <span v-if="form.studentFileList.length">已上传文件</span>
-            <span v-else>未上传</span>
-          </el-descriptions-item>
-          <el-descriptions-item label="题目信息文件">
-            <span v-if="form.questionFileList.length">已上传文件</span>
-            <span v-else>未上传</span>
-          </el-descriptions-item>
-        </el-descriptions>
-        <div class="chart-row">
-          <div class="chart-block">
-            <h3>学生能力分布</h3>
-            <div ref="abilityChartRef" class="chart-box"></div>
-          </div>
-          <div class="chart-block">
-            <h3>知识点掌握热力图</h3>
-            <div ref="heatmapChartRef" class="chart-box"></div>
-          </div>
-        </div>
-        <div class="chart-row">
-          <div class="chart-block">
-            <h3>学生能力雷达图</h3>
-            <div ref="radarChartRef" class="chart-box"></div>
-          </div>
-          <div class="chart-block">
-            <h3>薄弱知识点</h3>
-            <el-table :data="analysis.weakPoints" border size="small" style="width:100%">
-              <el-table-column prop="knowledge" label="知识点" min-width="120" />
-              <el-table-column prop="question" label="题目" min-width="180" />
-              <el-table-column prop="mastery" label="掌握率(%)" width="180">
-                <template #default="scope">
-                  <el-progress :percentage="scope.row.mastery" :stroke-width="16" color="#67C23A" :show-text="true" />
-                </template>
-              </el-table-column>
-            </el-table>
-          </div>
-        </div>
-        <div class="chart-row">
-          <div class="chart-block">
-            <h3>学生能力分层</h3>
-            <el-table :data="analysis.levels" border size="small" style="width:100%;margin-bottom:0;">
-              <el-table-column prop="level" label="能力层级" width="120" />
-              <el-table-column prop="count" label="学生人数" width="120" />
-              <el-table-column prop="desc" label="层级描述" />
-            </el-table>
-          </div>
-          <div class="chart-block">
-            <h3>知识点掌握分布</h3>
-            <div ref="pieChartRef" class="chart-box"></div>
-          </div>
-        </div>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, nextTick } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, UploadUserFile } from 'element-plus'
 import * as echarts from 'echarts'
 
-const formRef = ref()
-const previewVisible = ref(false)
-const analyzing = ref(false)
-const abilityChartRef = ref()
-const heatmapChartRef = ref()
-const radarChartRef = ref()
-const pieChartRef = ref()
+// 定义数据结构类型
+interface NameValue {
+  name: string;
+  value: number;
+}
 
-const form = ref({
+interface HeatmapData {
+  x: string[];
+  y: string[];
+  data: number[][];
+}
+
+interface RadarIndicator {
+  name: string;
+  max: number;
+}
+
+interface RadarData {
+  indicators: RadarIndicator[];
+  values: number[];
+}
+
+interface WeakPoint {
+  knowledge: string;
+  mastery: number;
+  question: string;
+}
+
+interface Level {
+  level: string;
+  count: number;
+  desc: string;
+}
+
+interface AnalysisData {
+  time: string;
+  model: string;
+  conclusion: string;
+  abilityDist: NameValue[];
+  heatmap: HeatmapData;
+  radar: RadarData;
+  weakPoints: WeakPoint[];
+  levels: Level[];
+  pie: NameValue[];
+}
+
+// 定义表单状态类型
+interface FormState {
+  studentDataOrigin: 'upload' | 'select';
+  studentFileList: UploadUserFile[]; // 使用 Element Plus 的类型
+  selectedStudentRecord: string; // 明确为字符串，初始为空字符串
+  questionFileList: UploadUserFile[];
+  desc: string;
+}
+
+const formRef = ref()
+const analyzing = ref(false)
+const abilityChartRef = ref<HTMLDivElement | null>(null)
+const heatmapChartRef = ref<HTMLDivElement | null>(null)
+const radarChartRef = ref<HTMLDivElement | null>(null)
+const pieChartRef = ref<HTMLDivElement | null>(null)
+
+// 使用类型初始化表单
+const form = ref<FormState>({
+  studentDataOrigin: 'select', // 默认选择记录
   studentFileList: [],
+  selectedStudentRecord: '', // 初始为空字符串
   questionFileList: [],
   desc: ''
 })
 const rules = {}
 
-const analysis = reactive({
+// 使用类型初始化分析结果
+const analysis = reactive<AnalysisData>({
   time: '',
   model: '',
   conclusion: '',
@@ -149,10 +208,15 @@ const analysis = reactive({
 })
 
 const handleAnalyze = async () => {
-  if (!form.value.studentFileList.length || !form.value.questionFileList.length) {
-    ElMessage.error('请上传学生数据和题目信息文件')
+  // 更新校验逻辑
+  if (
+    (form.value.studentDataOrigin === 'upload' && form.value.studentFileList.length === 0) ||
+    (form.value.studentDataOrigin === 'select' && form.value.selectedStudentRecord === '')
+  ) {
+    ElMessage.error('请上传学生数据文件或选择有效的答题记录')
     return
   }
+
   analyzing.value = true
   setTimeout(async () => {
     analyzing.value = false
@@ -214,8 +278,7 @@ const handleAnalyze = async () => {
     await nextTick()
     renderCharts()
     ElMessage.success('诊断完成')
-    previewVisible.value = true
-  }, 4000)
+  }, 1000) // 缩短等待时间
 }
 
 function renderCharts() {
@@ -238,11 +301,11 @@ function renderCharts() {
     const chart = echarts.init(heatmapChartRef.value)
     chart.setOption({
       tooltip: { position: 'top' },
-      grid: { left: 60, right: 20, bottom: 40, top: 30 },
+      grid: { left: 60, right: 20, bottom: 60, top: 30 },
       xAxis: { type: 'category', data: analysis.heatmap.x, splitArea: { show: true } },
       yAxis: { type: 'category', data: analysis.heatmap.y, splitArea: { show: true } },
       visualMap: {
-        min: 0, max: 100, calculable: true, orient: 'horizontal', left: 'center', bottom: 10
+        min: 0, max: 100, calculable: true, orient: 'horizontal', left: 'center', bottom: 0
       },
       series: [{
         name: '掌握度',
@@ -292,23 +355,47 @@ function renderCharts() {
 const handleSave = async () => {
   ElMessage.success('保存成功')
 }
-const handlePreview = () => {
-  if (!analysis.time) handleAnalyze()
-  previewVisible.value = true
-}
-const onDialogOpened = () => {
-  renderCharts()
-}
 const handleExport = () => {
   ElMessage.success('导出成功')
 }
 const handleReset = () => {
   if (!formRef.value) return
   formRef.value.resetFields()
-  form.value = { studentFileList: [], questionFileList: [], desc: '' }
+  // 重置表单为初始状态
+  form.value = {
+    studentDataOrigin: 'select',
+    studentFileList: [],
+    selectedStudentRecord: '',
+    questionFileList: [],
+    desc: ''
+  }
+  // 重置分析结果
   Object.assign(analysis, {
-    time: '', model: '', conclusion: '', abilityDist: [], heatmap: { x: [], y: [], data: [] }, radar: { indicators: [], values: [] }, weakPoints: [], levels: [], pie: []
+    time: '',
+    model: '',
+    conclusion: '',
+    abilityDist: [],
+    heatmap: { x: [], y: [], data: [] },
+    radar: { indicators: [], values: [] },
+    weakPoints: [],
+    levels: [],
+    pie: []
   })
+  // 清空图表
+  // (可选：根据需要决定是否需要清空图表实例)
+}
+
+function getRecordLabel(record: string): string {
+  switch (record) {
+    case 'swe_2201_final':
+      return '软件工程2201班 期末考试'
+    case 'cs_2202_hw1':
+      return '计算机科学2202班 平时作业1'
+    case 'ne_2201_unit2':
+      return '网络工程2201班 单元测试2'
+    default:
+      return '未知记录'
+  }
 }
 </script>
 
@@ -330,10 +417,14 @@ const handleReset = () => {
   gap: 20px;
   margin-top: 20px;
 }
-.preview-content {
+.results-section {
+  margin-top: 30px;
   padding: 20px;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  background-color: #fff;
 }
-.preview-content h2 {
+.results-section h2 {
   text-align: center;
   margin-bottom: 24px;
 }
@@ -359,5 +450,8 @@ const handleReset = () => {
   height: 260px;
   background: #f7f8fa;
   border-radius: 8px;
+}
+.heatmap-chart-box {
+  height: 360px; /* 增加热力图高度 */
 }
 </style>

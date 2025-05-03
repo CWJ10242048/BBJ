@@ -50,7 +50,10 @@
     <div style="margin-top: 20px;">
       <!-- Analysis Result Section (inside loading container) -->
       <div v-if="analysis.time" class="analysis-result">
-        <h2>知识追踪分析结果</h2>
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
+          <h2>知识追踪分析结果</h2>
+          <el-tag type="success" size="small" style="margin-left: 10px;">AI自动生成</el-tag>
+        </div>
         <el-descriptions :column="2" border>
           <el-descriptions-item label="分析时间">{{ analysis.time }}</el-descriptions-item>
           <el-descriptions-item label="班级">{{ analysis.className }}</el-descriptions-item>

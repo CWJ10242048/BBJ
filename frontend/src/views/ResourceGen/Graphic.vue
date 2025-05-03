@@ -323,6 +323,31 @@
         </el-dialog>
      </template>
 
+    <!-- 显示生成的题目 -->
+    <template v-if="generatedQuestions && generatedQuestions.length > 0">
+      <el-card class="generated-questions-card" style="margin-top: 20px;">
+         <template #header>
+           <div class="card-header">
+             <span>生成的题目预览</span>
+             <!-- 可以加一些操作按钮，比如重新生成 -->
+           </div>
+         </template>
+         <!-- 简单渲染题目列表 -->
+         <div v-for="q in generatedQuestions" :key="q.id" class="question-item">
+           <p><strong>[{{ q.type }}]</strong> {{ q.stem }}</p>
+           <div v-if="q.options">
+             <ul>
+               <li v-for="(opt, index) in q.options" :key="index">{{ opt }}</li>
+             </ul>
+           </div>
+           <p v-if="q.answer"><strong>答案:</strong> {{ q.answer }}</p>
+           <p v-if="q.analysis && form.explain"><strong>解析:</strong> {{ q.analysis }}</p>
+           <el-divider />
+         </div>
+         <!-- 或者使用专门的组件 <GeneratedQuestionsDisplay :questions="generatedQuestions" /> -->
+      </el-card>
+    </template>
+
   </div>
 </template>
 
@@ -335,6 +360,7 @@ import {
   // Import necessary icons from PPT.vue
   Clock, Film, VideoCamera, Guide, SetUp, DataAnalysis, Collection, FullScreen, Brush, Rank, Document 
 } from '@element-plus/icons-vue'
+import GeneratedQuestionsDisplay from './GeneratedQuestionsDisplay.vue'; // 假设我们创建一个新组件来显示
 
 // Define emit function (generate might not be needed if standalone only, but keep for now)
 const emit = defineEmits(['generate', 'cancel'])
@@ -391,6 +417,7 @@ const previewVisible = ref(false)
 const exporting = ref(false)
 const isAiFilling = ref(false)
 const isTyping = ref(false);
+const generatedQuestions = ref<any[] | null>(null); // 用于存储生成的题目数据
 
 // --- Teaching content selection state ---
 const historyPlans = ref<HistoryPlan[]>([
@@ -677,6 +704,7 @@ const handleReset = () => {
     videoScript: ''
   };
   // 清除可能残留的文件列表等
+  generatedQuestions.value = null; // 清空生成的题目
 }
 
 // --- AI Fill Handler (Strictly mimicking PPT.vue logic) ---
@@ -877,6 +905,50 @@ const getResourceTagInfo = (tagString: string, resourceType: 'image' | 'video'):
 
   return { icon, type, label };
 }
+
+// --- Generate Questions Handler ---
+const handleGenerateQuestions = async () => {
+  if (!formRef.value || !selectedPlanStructure.value) {
+      ElMessage.warning('请先完成所有配置步骤');
+      return;
+  }
+
+  try {
+    await formRef.value.validate();
+
+    // Prepare configuration object (still useful even without navigation)
+    const generationConfig: GenerationConfig = {
+        source: selectedPlanStructure.value.title,
+        generationParams: { ...form.value },
+        major: selectedPlanStructure.value.content.syllabus,
+        course: selectedPlanStructure.value.usage,
+        overallKnowledgePoints: selectedPlanStructure.value.content.stages.map(s => s.name),
+    };
+
+    console.log("准备生成题目，配置:", generationConfig);
+
+    // *** 模拟题目生成过程 ***
+    // TODO: 替换为实际的 API 调用
+    ElMessage.info('正在生成题目 (模拟)...');
+    await new Promise(resolve => setTimeout(resolve, 1000)); // 模拟网络延迟
+
+    // 模拟生成的题目数据 (你需要根据实际需要调整结构)
+    const simulatedQuestions = [
+        { id: 1, type: '选择题', stem: '关于栈的描述，以下哪个是错误的？', options: ['A. LIFO', 'B. FILO', 'C. FIFO', 'D.只能在一端操作'], answer: 'C', analysis: '栈是后进先出（LIFO）或先进后出（FILO）的数据结构，操作通常在栈顶进行。FIFO是队列的特性。' },
+        { id: 2, type: '填空题', stem: '快速排序的平均时间复杂度是 ____。', answer: 'O(n log n)', analysis: '...' },
+        // ... 添加更多模拟题目 ...
+    ];
+
+    // *** 更新状态以显示题目 ***
+    generatedQuestions.value = simulatedQuestions;
+    ElMessage.success('题目已生成 (模拟)');
+
+  } catch (e) {
+    console.error("表单校验失败或生成出错:", e);
+    ElMessage.error('请填写/修正所有必填项后才能生成题目');
+    generatedQuestions.value = null; // 出错时清空
+  }
+}
 </script>
 
 <style scoped>
@@ -1002,5 +1074,29 @@ const getResourceTagInfo = (tagString: string, resourceType: 'image' | 'video'):
   /* Keep existing styles or adjust */
   color: #909399;
   font-size: 12px;
+}
+
+.generated-questions-card {
+  /* Add styles for the generated questions card if needed */
+}
+
+.question-item {
+  margin-bottom: 15px;
+}
+.question-item p {
+  margin: 5px 0;
+}
+.question-item ul {
+  margin-left: 20px;
+  list-style: none;
+  padding: 0;
+}
+.question-item li {
+  margin-bottom: 3px;
+}
+
+/* 微调分隔线 */
+.question-item .el-divider {
+  margin: 15px 0;
 }
 </style>

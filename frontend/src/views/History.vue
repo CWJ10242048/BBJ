@@ -72,10 +72,17 @@ const fetchRecords = async () => {
   loading.value = true
   try {
     const response = await historyApi.getRecords()
-    historyList.value = response.data
+    if (response && response.data) {
+      historyList.value = response.data
+      console.log('成功获取历史记录:', response.data)
+    } else {
+      throw new Error('返回数据格式不正确')
+    }
   } catch (error) {
     console.error('获取历史记录失败:', error)
-    ElMessage.error('获取历史记录失败')
+    ElMessage.error('获取历史记录失败，使用模拟数据')
+    // 使用模拟数据作为后备
+    historyList.value = getMockHistoryData()
   } finally {
     loading.value = false
   }
@@ -104,8 +111,34 @@ const handleDelete = async (row: HistoryRecord) => {
 
 onMounted(() => {
   console.log('使用API基础路径:', apiBaseUrl) // 调试用
+  
+  // 检查API连接状态
+  checkApiConnection()
+  
+  // 获取历史记录
   fetchRecords()
 })
+
+// 检测API连接状态
+const checkApiConnection = async () => {
+  try {
+    // 发送一个简单的请求检查连接
+    await fetch(apiBaseUrl.replace(/\/api$/, '') + '/api/health', { 
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    })
+    console.log('API连接正常')
+  } catch (error) {
+    console.error('API连接测试失败:', error)
+    ElMessage.warning({
+      message: '后端连接异常，可能导致数据加载失败',
+      duration: 5000
+    })
+  }
+}
 </script>
 
 <style scoped>

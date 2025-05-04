@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="./favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教学助手系统</title>
+    <!-- API配置 -->
+    <script>
+      // 强制指定API地址
+      window.API_BASE_URL = 'http://47.97.217.4:8081/api';
+      
+      // 监听网络错误
+      window.addEventListener('error', function(e) {
+        if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+          console.warn('资源加载失败:', e.target.src || e.target.href);
+        }
+      }, true);
+    </script>
+    <script src="./config.js"></script>
+    <script type="module" crossorigin src="./assets/index-8d7d8898.js"></script>
+    <link rel="stylesheet" href="./assets/index-711ece35.css">
+  </head>
+  <body>
+    <div id="app"></div>
+
+  </body>
+</html> 

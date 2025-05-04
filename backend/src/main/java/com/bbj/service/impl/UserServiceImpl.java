@@ -7,22 +7,23 @@ import com.bbj.entity.User;
 import com.bbj.repository.UserRepository;
 import com.bbj.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 @Service
 public class UserServiceImpl implements UserService {
     
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
     }
     
     @Override
@@ -76,12 +77,12 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
         
         // 验证旧密码
-        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+        if (!encodePassword(request.getOldPassword()).equals(user.getPassword())) {
             return false;
         }
         
         // 更新密码
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setPassword(encodePassword(request.getNewPassword()));
         userRepository.save(user);
         return true;
     }
@@ -108,5 +109,16 @@ public class UserServiceImpl implements UserService {
                 user.getSubject(),
                 user.getRole()
         );
+    }
+    
+    // 简单的密码加密方法，使用SHA-256替代Spring Security的PasswordEncoder
+    private String encodePassword(String password) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("密码加密失败", e);
+        }
     }
 } 

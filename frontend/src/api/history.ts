@@ -11,8 +11,8 @@ export interface HistoryRecord {
 
 // 获取环境相关的API基础URL
 const getApiBaseUrl = (): string => {
-  // 使用相对路径，通过Vite代理访问后端
-  return '/api';
+  // 直接使用后端服务器地址，不再通过前端代理
+  return 'http://47.97.217.4:8081/api';
 };
 
 // 创建axios实例
@@ -53,8 +53,32 @@ apiClient.interceptors.response.use(
 // 历史记录API函数
 export const historyApi = {
   // 获取历史记录列表
-  getRecords(): Promise<AxiosResponse<HistoryRecord[]>> {
-    return apiClient.get('/history/records');
+  async getRecords(): Promise<AxiosResponse<HistoryRecord[]>> {
+    try {
+      // 使用原始axios方法
+      return await apiClient.get('/history/records');
+    } catch (error) {
+      console.error('Axios调用失败，尝试直接fetch:', error);
+      
+      // 如果axios调用失败，尝试直接使用fetch
+      const directUrl = 'http://47.97.217.4:8081/api/history/records';
+      console.log('尝试直接请求:', directUrl);
+      
+      const response = await fetch(directUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return { data, status: response.status, statusText: response.statusText } as any;
+    }
   },
   
   // 删除历史记录

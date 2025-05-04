@@ -1,0 +1,14 @@
+com\bbj\controller\UserController.class
+com\bbj\entity\User.class
+com\bbj\dto\PasswordUpdateRequest.class
+com\bbj\config\WebConfig.class
+com\bbj\controller\FileController.class
+com\bbj\entity\HistoryRecord.class
+com\bbj\service\UserService.class
+com\bbj\service\impl\UserServiceImpl.class
+com\bbj\dto\UserUpdateRequest.class
+com\bbj\repository\HistoryRecordRepository.class
+com\bbj\repository\UserRepository.class
+com\bbj\dto\UserDTO.class
+com\bbj\BBJApplication.class
+com\bbj\controller\HistoryController.class

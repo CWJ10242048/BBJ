@@ -20,107 +20,131 @@
             :popper-effect="isCollapse ? 'light' : ''"
             menu-trigger="hover"
             router>
-            <el-menu-item index="/home" class="menu-item">
-                <el-icon><HomeFilled /></el-icon>
-                <span>首页</span>
-            </el-menu-item>
-            
-            <el-sub-menu index="/teaching-design" popper-class="custom-popper">
-                <template #title>
-                    <el-icon><Document /></el-icon>
-                    <span>教学设计</span>
-                </template>
-                <el-menu-item index="/teaching-design/syllabus" class="menu-item">
-                    <img src="@/assets/logo/syllabus.svg" class="menu-icon" />
-                    <span>教学大纲设计</span>
+            <template v-if="admin">
+                <el-menu-item index="/admin/function" class="menu-item">
+                    <el-icon><Setting /></el-icon>
+                    <span>功能管理</span>
                 </el-menu-item>
-                <el-menu-item index="/teaching-design/plan" class="menu-item">
-                    <el-icon><EditPen /></el-icon>
-                    <span>教案生成</span>
+                <el-menu-item index="/admin/user" class="menu-item">
+                    <el-icon><UserFilled /></el-icon>
+                    <span>用户管理</span>
                 </el-menu-item>
-                <el-menu-item index="/teaching-design/interaction" class="menu-item">
-                    <el-icon><ChatDotRound /></el-icon>
-                    <span>互动环节设计</span>
+                <el-menu-item index="/admin/notice" class="menu-item">
+                    <el-icon><Bell /></el-icon>
+                    <span>公告管理</span>
                 </el-menu-item>
-            </el-sub-menu>
-            
-            <el-sub-menu index="/resource-gen" popper-class="custom-popper">
-                <template #title>
-                    <el-icon><Picture /></el-icon>
-                    <span>教学资源</span>
-                </template>
-                <el-menu-item index="/resource-gen/ppt" class="menu-item">
-                    <img src="@/assets/logo/ppt.svg" class="menu-icon" />
-                    <span>PPT生成</span>
+                <el-menu-item index="/admin/resource" class="menu-item">
+                    <el-icon><Folder /></el-icon>
+                    <span>资源管理</span>
                 </el-menu-item>
-                <el-menu-item index="/resource-gen/graphic" class="menu-item">
-                    <img src="@/assets/logo/graphic.svg" class="menu-icon" />
-                    <span>资源生成</span>
+                <el-menu-item index="/admin/profile" class="menu-item">
+                    <el-icon><User /></el-icon>
+                    <span>个人中心</span>
                 </el-menu-item>
-                <el-menu-item index="/resource-gen/question" class="menu-item">
-                    <el-icon><QuestionFilled /></el-icon>
-                    <span>智能出题</span>
+            </template>
+            <template v-else>
+                <el-menu-item index="/home" class="menu-item">
+                    <el-icon><HomeFilled /></el-icon>
+                    <span>首页</span>
                 </el-menu-item>
-            </el-sub-menu>
-            
-            <el-sub-menu index="/analysis" popper-class="custom-popper">
-                <template #title>
-                    <el-icon><DataLine /></el-icon>
-                    <span>学情分析</span>
-                </template>
-                <el-menu-item index="/analysis/student-board" class="menu-item">
-                    <el-icon><Histogram /></el-icon>
-                    <span>学生数据看板</span>
+                
+                <el-sub-menu index="/teaching-design" popper-class="custom-popper">
+                    <template #title>
+                        <el-icon><Document /></el-icon>
+                        <span>教学设计</span>
+                    </template>
+                    <el-menu-item index="/teaching-design/syllabus" class="menu-item">
+                        <img src="@/assets/logo/syllabus.svg" class="menu-icon" />
+                        <span>教学大纲设计</span>
+                    </el-menu-item>
+                    <el-menu-item index="/teaching-design/plan" class="menu-item">
+                        <el-icon><EditPen /></el-icon>
+                        <span>教案生成</span>
+                    </el-menu-item>
+                    <el-menu-item index="/teaching-design/interaction" class="menu-item">
+                        <el-icon><ChatDotRound /></el-icon>
+                        <span>互动环节设计</span>
+                    </el-menu-item>
+                </el-sub-menu>
+                
+                <el-sub-menu index="/resource-gen" popper-class="custom-popper">
+                    <template #title>
+                        <el-icon><Picture /></el-icon>
+                        <span>教学资源</span>
+                    </template>
+                    <el-menu-item index="/resource-gen/ppt" class="menu-item">
+                        <img src="@/assets/logo/ppt.svg" class="menu-icon" />
+                        <span>PPT生成</span>
+                    </el-menu-item>
+                    <el-menu-item index="/resource-gen/graphic" class="menu-item">
+                        <img src="@/assets/logo/graphic.svg" class="menu-icon" />
+                        <span>资源生成</span>
+                    </el-menu-item>
+                    <el-menu-item index="/resource-gen/question" class="menu-item">
+                        <el-icon><QuestionFilled /></el-icon>
+                        <span>智能出题</span>
+                    </el-menu-item>
+                </el-sub-menu>
+                
+                <el-sub-menu index="/analysis" popper-class="custom-popper">
+                    <template #title>
+                        <el-icon><DataLine /></el-icon>
+                        <span>学情分析</span>
+                    </template>
+                    <el-menu-item index="/analysis/student-board" class="menu-item">
+                        <el-icon><Histogram /></el-icon>
+                        <span>学生数据看板</span>
+                    </el-menu-item>
+                    <el-menu-item index="/analysis/cognition" class="menu-item">
+                        <img src="@/assets/logo/cognition.svg" class="menu-icon" />
+                        <span>认知诊断</span>
+                    </el-menu-item>
+                    <el-menu-item index="/analysis/knowledge-track" class="menu-item">
+                        <img src="@/assets/logo/knowledge-track.svg" class="menu-icon" />
+                        <span>知识追踪</span>
+                    </el-menu-item>
+                </el-sub-menu>
+                
+                <el-sub-menu index="/resource-lib" popper-class="custom-popper">
+                    <template #title>
+                        <el-icon><Collection /></el-icon>
+                        <span>资源库</span>
+                    </template>
+                    <el-menu-item index="/resource-lib/graph" class="menu-item">
+                        <el-icon><Share /></el-icon>
+                        <span>知识图谱</span>
+                    </el-menu-item>
+                    <el-menu-item index="/resource-lib/community" class="menu-item">
+                        <img src="@/assets/logo/community.svg" class="menu-icon" />
+                        <span>资源社区</span>
+                    </el-menu-item>
+                </el-sub-menu>
+                
+                <el-menu-item index="/personalized" class="menu-item">
+                    <el-icon><MagicStick /></el-icon>
+                    <span>一键个性化备课</span>
                 </el-menu-item>
-                <el-menu-item index="/analysis/cognition" class="menu-item">
-                    <img src="@/assets/logo/cognition.svg" class="menu-icon" />
-                    <span>认知诊断</span>
+                
+                <el-menu-item index="/oj" class="menu-item">
+                    <el-icon><Monitor /></el-icon>
+                    <span>代码OJ</span>
                 </el-menu-item>
-                <el-menu-item index="/analysis/knowledge-track" class="menu-item">
-                    <img src="@/assets/logo/knowledge-track.svg" class="menu-icon" />
-                    <span>知识追踪</span>
+                
+                <el-menu-item index="/history" class="menu-item">
+                    <img src="@/assets/logo/history.svg" class="menu-icon" />
+                    <span>输出历史</span>
                 </el-menu-item>
-            </el-sub-menu>
-            
-            <el-sub-menu index="/resource-lib" popper-class="custom-popper">
-                <template #title>
-                    <el-icon><Collection /></el-icon>
-                    <span>资源库</span>
-                </template>
-                <el-menu-item index="/resource-lib/graph" class="menu-item">
-                    <el-icon><Share /></el-icon>
-                    <span>知识图谱</span>
+                
+                <el-menu-item index="/cooperation" class="menu-item">
+                    <el-icon><Service /></el-icon>
+                    <span>协作空间</span>
                 </el-menu-item>
-                <el-menu-item index="/resource-lib/community" class="menu-item">
-                    <img src="@/assets/logo/community.svg" class="menu-icon" />
-                    <span>资源社区</span>
+                
+                <el-menu-item index="/profile" class="menu-item">
+                    <img src="@/assets/logo/profile.svg" class="menu-icon" />
+                    <span>个人中心</span>
                 </el-menu-item>
-            </el-sub-menu>
-            
-            <el-menu-item index="/personalized" class="menu-item">
-                <el-icon><MagicStick /></el-icon>
-                <span>一键个性化备课</span>
-            </el-menu-item>
-            
-            <el-menu-item index="/oj" class="menu-item">
-                <el-icon><Monitor /></el-icon>
-                <span>代码OJ</span>
-            </el-menu-item>
-            
-            <el-menu-item index="/history" class="menu-item">
-                <img src="@/assets/logo/history.svg" class="menu-icon" />
-                <span>输出历史</span>
-            </el-menu-item>
-            
-            <el-menu-item index="/cooperation" class="menu-item">
-                <el-icon><Service /></el-icon>
-                <span>协作空间</span>
-            </el-menu-item>
-            
-            <el-menu-item index="/profile" class="menu-item">
-                <img src="@/assets/logo/profile.svg" class="menu-icon" />
-                <span>个人中心</span>
-            </el-menu-item>
+            </template>
         </el-menu>
     </el-aside>
 </template>
@@ -147,12 +171,19 @@ import {
     Notebook,
     Service,
     User,
-    Collection
+    Collection,
+    Setting,
+    Folder,
+    Bell
 } from '@element-plus/icons-vue'
 
 // 接收折叠状态作为props
 const props = defineProps({
   isCollapse: {
+    type: Boolean,
+    default: false
+  },
+  admin: {
     type: Boolean,
     default: false
   }

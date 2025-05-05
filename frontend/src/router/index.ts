@@ -2,20 +2,58 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/login',
-      name: 'Login',
-      component: () => import('@/views/others/login.vue'),
-      meta: {
-        title: '登录',
-        requiresAuth: false
-      }
+      path: '/',
+      redirect: '/login'
     },
     {
-      path: '/',
-      redirect: '/home'
+      path: '/login',
+      component: () => import('@/views/others/login.vue')
+    },
+    // 教师系统路由
+    {
+      path: '/teacher',
+      component: () => import('@/layouts/TeacherLayout.vue'),
+      children: [
+        {
+          path: 'dashboard',
+          component: () => import('@/views/TeacherDashboard.vue')
+        },
+        // ... 其他教师系统路由
+      ]
+    },
+    // 管理员系统路由
+    {
+      path: '/admin',
+      component: () => import('@/views/sys/learn_front_mange-master/src/views/layout/index.vue'),
+      children: [
+        {
+          path: '',
+          redirect: '/admin/function'
+        },
+        {
+          path: 'function',
+          component: () => import('@/views/sys/learn_front_mange-master/src/views/system/function/index.vue')
+        },
+        {
+          path: 'user',
+          component: () => import('@/views/sys/learn_front_mange-master/src/views/system/user/index.vue')
+        },
+        {
+          path: 'notice',
+          component: () => import('@/views/sys/learn_front_mange-master/src/views/system/notice/index.vue')
+        },
+        {
+          path: 'resource',
+          component: () => import('@/views/sys/learn_front_mange-master/src/views/system/resource/index.vue')
+        },
+        {
+          path: 'profile',
+          component: () => import('@/views/sys/learn_front_mange-master/src/views/system/profile/index.vue')
+        }
+      ]
     },
     {
       path: '/',
@@ -171,19 +209,32 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  console.log('Navigating to:', to.path)  // 打印目标路由路径
   const userStore = useUserStore()
-  const token = userStore.token
+  const isAuthenticated = userStore.token
+  const userRole = userStore.user?.role
 
-  // 设置页面标题
-  document.title = to.meta.title as string || 'AI备课系统'
-
-  // 如果需要认证且没有token，重定向到登录页
-  if (to.meta.requiresAuth && !token) {
-    next('/login')
-  } else {
+  if (to.path === '/login') {
     next()
+    return
   }
+
+  if (!isAuthenticated) {
+    next('/login')
+    return
+  }
+
+  // 检查角色权限
+  if (to.path.startsWith('/admin') && userRole !== 'admin') {
+    next('/teacher/dashboard')
+    return
+  }
+
+  if (to.path.startsWith('/teacher') && userRole !== 'teacher') {
+    next('/admin/dashboard')
+    return
+  }
+
+  next()
 })
 
 export default router

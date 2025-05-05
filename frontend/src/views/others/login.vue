@@ -82,27 +82,27 @@ const rememberPassword = ref(false)
 const autoLogin = ref(false)
 
 const roles = [
-    { label: '学生', value: 'student' },
-    { label: '教师', value: 'teacher' },
-    { label: '管理员', value: 'admin' }
-]
+                { label: '学生', value: 'student' },
+                { label: '教师', value: 'teacher' },
+                { label: '管理员', value: 'admin' }
+            ]
 
 const login = () => {
     if (!username.value) {
         ElMessage({
-            message: '请输入用户名',
-            type: 'warning'
+                    message: '请输入用户名',
+                    type: 'warning'
         })
         return
-    }
+            }
     
     if (!password.value) {
         ElMessage({
-            message: '请输入密码',
-            type: 'warning'
+                    message: '请输入密码',
+                    type: 'warning'
         })
         return
-    }
+            }
 
     // 设置模拟的token和用户信息
     const mockToken = 'mock_token_' + Date.now()
@@ -118,14 +118,25 @@ const login = () => {
     
     // 显示登录成功消息
     ElMessage({
-        message: '登录成功',
-        type: 'success'
+                        message: '登录成功',
+                        type: 'success'
     })
 
-    // 延迟跳转到首页
-    setTimeout(() => {
+    // 根据角色跳转到不同页面
+    console.log('当前角色:', role.value)
+    if (role.value === 'admin') {
+        console.log('跳转到管理员页面')
+        router.push('/admin/function').catch(err => {
+            console.error('路由跳转失败:', err)
+            ElMessage.error('页面跳转失败，请刷新重试')
+            })
+    } else if (role.value === 'teacher') {
+        console.log('跳转到教师页面')
         router.push('/home')
-    }, 500)
+    } else {
+        console.log('跳转到默认页面')
+        router.push('/home')
+    }
 }
 </script>
 

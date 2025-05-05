@@ -65,7 +65,7 @@
           <el-dropdown trigger="click" @command="handleCommand">
             <div class="avatar-container">
               <el-avatar :size="36" :src="lockBackImg" />
-              <span class="username">李老师</span>
+              <span class="username">{{ displayName }}</span>
               <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
             </div>
             <template #dropdown>
@@ -187,7 +187,7 @@ const notifications = ref([
 const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
 
 // 获取用户信息
-const user = userStore.user
+const user = computed(() => userStore.user)
 
 // 计算当前路由对应的菜单项
 const currentMenuInfo = computed(() => {
@@ -308,13 +308,16 @@ function full() {
 // 处理命令
 function handleCommand(command) {
   if (command === "profile") {
-    router.push("/profile")
+    if (user.value?.role === 'admin') {
+      router.push("/admin/profile")
+    } else {
+      router.push("/profile")
+    }
   } else if (command === "password") {
     router.push({ path: '/profile', hash: '#security' })
   } else if (command === "lock") {
     appStore.toggleLock(true)
   } else if (command === "logout") {
-    // 退出登录
     userStore.setToken("")
     userStore.setUser("")
     router.push("/login")
@@ -347,6 +350,17 @@ function markSingleRead(item) {
 function markAllReadInDialog() {
   markAllRead()
 }
+
+// 用户名显示逻辑
+const displayName = computed(() => {
+  if (user.value?.role === 'admin') {
+    return 'admin'
+  }
+  if (user.value?.role === 'teacher') {
+    return '李老师'
+  }
+  return user.value?.username || '教师'
+})
 </script>
 
 <style scoped>

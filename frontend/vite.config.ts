@@ -23,5 +23,15 @@ export default defineConfig({
         rewrite: (path) => path
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        // 确保文件名包含唯一的内容哈希
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    }
   }
 })

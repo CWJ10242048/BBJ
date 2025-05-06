@@ -28,18 +28,20 @@
       
       <!-- ISBN输入方式 -->
       <div v-if="bookSelectionMethod === 'isbn'" class="isbn-input">
-        <el-input
+        <el-select
           v-model="isbnCode"
+          filterable
+          allow-create
+          default-first-option
           placeholder="请输入教材ISBN码"
           class="isbn-input-field"
+          @change="searchBookByISBN"
         >
-          <template #append>
-            <el-button @click="searchBookByISBN" :loading="isSearching">
-              <el-icon><Search /></el-icon>
-              {{ isSearching ? '检索中...' : '搜索' }}
-            </el-button>
-          </template>
-        </el-input>
+          <el-option
+            label="机器学习 - 9787302423287"
+            value="9787302423287"
+          />
+        </el-select>
         <div v-if="isSearching" class="searching-animation">
           <div class="searching-content">
             <el-icon class="searching-icon"><Loading /></el-icon>
@@ -65,6 +67,7 @@
             <p>作者：{{ bookInfo.author }}</p>
             <p>出版社：{{ bookInfo.publisher }}</p>
             <p>出版年份：{{ bookInfo.publishYear }}</p>
+            <p>ISBN：{{ bookInfo.isbn }}</p>
           </div>
         </div>
         <div v-if="selectedBook" class="selected-book">
@@ -1231,20 +1234,20 @@ const startAiAnalysis = () => {
         
         // 模拟填充数据
         form.value = {
-          courseName: '人工智能导论',
+          courseName: '机器学习',
           courseType: 'professional',
           credits: 3,
           totalHours: 48,
           labHours: 16,
           targetStudents: '计算机科学与技术、软件工程、人工智能等相关专业',
-          chapters: '第一章 人工智能概述\n第二章 智能Agent\n第三章 搜索与规划\n第四章 知识表示与推理\n第五章 机器学习\n第六章 自然语言处理\n第七章 计算机视觉\n第八章 机器人学',
-          keyPoints: '难点：\n1. 搜索算法的复杂性分析\n2. 概率模型与贝叶斯网络\n3. 深度学习模型的训练与优化\n\n重点：\n1. 各种启发式搜索方法\n2. 机器学习的基本原理\n3. 自然语言处理的基础技术',
+          chapters: '第一章 绪论\n第二章 模型评估与选择\n第三章 线性模型\n第四章 决策树\n第五章 神经网络\n第六章 支持向量机\n第七章 贝叶斯分类\n第八章 集成学习\n第九章 聚类\n第十章 降维与度量学习',
+          keyPoints: '难点：\n1. 模型评估与选择中的过拟合问题\n2. 神经网络的训练与优化\n3. 支持向量机的核函数选择\n\n重点：\n1. 各种机器学习算法的基本原理\n2. 模型评估与性能度量方法\n3. 特征工程与数据预处理技术',
           teachingMethods: ['讲授法', '案例教学', '项目教学'],
           teachingMeans: ['多媒体教学', '实验教学', '网络教学'],
           assessmentMethods: '平时成绩（20%）+ 实验报告（30%）+ 期末考试（50%）',
-          textbook: '人工智能：一种现代方法（第4版）.pdf',
-          onlineResources: 'Coursera - AI for Everyone\nStanford CS231n\nDeepLearning.AI',
-          customRequirements: '注重培养学生解决实际问题的能力，鼓励学生参与科研项目和人工智能竞赛。'
+          textbook: '机器学习.pdf',
+          onlineResources: 'Coursera - 机器学习\nStanford CS229\n吴恩达机器学习课程',
+          customRequirements: '注重培养学生解决实际问题的能力，鼓励学生参与机器学习竞赛和项目实践。'
         }
         
         // 更新所有AI生成标记
@@ -1451,6 +1454,7 @@ const bookInfo = ref<{
   publisher: string;
   publishYear: string;
   cover: string;
+  isbn: string;
 } | null>(null)
 const uploadedBook = ref<{ name: string; file: File } | null>(null)
 
@@ -1474,7 +1478,8 @@ const searchBookByISBN = async () => {
       author: '周志华',
       publisher: '清华大学出版社',
       publishYear: '2016',
-      cover: new URL('@/assets/image/machine_learning.png', import.meta.url).href
+      cover: new URL('@/assets/image/machine_learning.png', import.meta.url).href,
+      isbn: '9787302423287'
     }
     selectedBook.value = '机器学习'
     ElMessage.success('书籍信息获取成功')

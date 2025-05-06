@@ -64,7 +64,7 @@
         <div class="user-profile">
           <el-dropdown trigger="click" @command="handleCommand">
             <div class="avatar-container">
-              <el-avatar :size="36" :src="lockBackImg" />
+              <el-avatar :size="36" :src="displayAvatar" />
               <span class="username">{{ displayName }}</span>
               <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
             </div>
@@ -142,6 +142,8 @@ import {
   User
 } from '@element-plus/icons-vue'
 import lockBackImg from '@/assets/image/lock-back.jpg'
+import adminAvatar from '@/assets/image/admin.png'
+import teacherAvatar from '@/assets/image/lock-back.jpg'
 
 // 定义emit
 const emit = defineEmits(['toggle-collapse'])
@@ -353,13 +355,21 @@ function markAllReadInDialog() {
 
 // 用户名显示逻辑
 const displayName = computed(() => {
-  if (user.value?.role === 'admin') {
+  if (user.value?.role === 'ADMIN') {
     return 'admin'
   }
   if (user.value?.role === 'teacher') {
     return '李老师'
   }
   return user.value?.username || '教师'
+})
+
+// 计算头像显示
+const displayAvatar = computed(() => {
+  if (user.value?.role === 'ADMIN') {
+    return '/src/assets/image/admin.png'
+  }
+  return '/src/assets/image/lock-back.jpg'
 })
 </script>
 

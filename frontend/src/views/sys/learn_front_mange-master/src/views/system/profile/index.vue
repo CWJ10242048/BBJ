@@ -1,802 +1,852 @@
 <template>
-    <div class="admin-profile-wrapper">
-      <div class="profile-main">
-        <!-- 左侧个人信息卡片 -->
-        <div class="profile-card">
-          <el-card class="profile-card-content" :body-style="{ padding: '0px' }">
-            <!-- 头像区域 -->
-            <div class="profile-header">
-              <div class="avatar-block" @click="triggerAvatarSelect" title="点击更换头像">
-                <el-avatar :size="120" :src="avatarUrl">
-                  {{ form.username?.charAt(0)?.toUpperCase() }}
-                </el-avatar>
-                <div class="avatar-upload-icon">
-                  <el-icon><Camera /></el-icon>
-                </div>
-                <input
-                  ref="avatarInput"
-                  type="file"
-                  accept="image/*"
-                  class="hidden-input"
-                  @change="onAvatarSelected"
-                />
-              </div>
-              <div class="admin-info">
-                <div class="admin-name">{{ form.username }}</div>
-                <el-tag type="success" effect="dark" class="role-tag">
-                  <el-icon><UserFilled /></el-icon>
-                  管理员账号
-                </el-tag>
-                <div class="admin-status">
-                  <el-tag type="success" effect="plain" size="small">
-                    <el-icon><CircleCheck /></el-icon>
-                    在线
-                  </el-tag>
+  <div class="profile-container">
+    <div class="profile-header">
+      <h1 class="profile-title">管理员个人中心</h1>
+      <div class="profile-subtitle">管理您的个人信息和账户设置</div>
+    </div>
+
+    <div class="profile-content">
+      <!-- 左侧个人信息卡片 -->
+      <el-card class="profile-card" :body-style="{ padding: '0' }">
+        <div class="profile-card-header">
+          <div class="profile-avatar-section">
+            <el-upload
+              class="avatar-uploader"
+              :show-file-list="false"
+              :auto-upload="false"
+              accept=".png,.jpg,.jpeg"
+              @change="handleAvatarChange"
+            >
+              <div class="avatar-container">
+                <img v-if="form.avatarUrl" :src="form.avatarUrl" class="avatar" />
+                <el-icon v-else class="avatar-placeholder"><User /></el-icon>
+                <div class="avatar-hover-mask">
+                  <el-icon><EditPen /></el-icon>
+                  <span>更换头像</span>
                 </div>
               </div>
+            </el-upload>
+            <div class="user-name">{{ form.nickname }}</div>
+            <div class="user-role">
+              <el-tag size="small" effect="plain" type="success">管理员账号</el-tag>
             </div>
-  
-            <!-- 统计信息 -->
-            <div class="profile-stats">
-              <div class="stat-item">
-                <el-icon><User /></el-icon>
-                <div class="stat-content">
-                  <div class="stat-num">{{ stats.userCount }}</div>
-                  <div class="stat-label">管理用户</div>
-                </div>
-              </div>
-              <div class="stat-item">
-                <el-icon><Document /></el-icon>
-                <div class="stat-content">
-                  <div class="stat-num">{{ stats.resourceCount }}</div>
-                  <div class="stat-label">资源数</div>
-                </div>
-              </div>
-              <div class="stat-item">
-                <el-icon><List /></el-icon>
-                <div class="stat-content">
-                  <div class="stat-num">{{ stats.logCount }}</div>
-                  <div class="stat-label">操作日志</div>
-                </div>
-              </div>
-            </div>
-  
-            <!-- 联系信息 -->
-            <div class="profile-contact">
-              <div class="contact-item">
-                <el-icon><Message /></el-icon>
-                <span>{{ form.email }}</span>
-              </div>
-              <div class="contact-item">
-                <el-icon><Phone /></el-icon>
-                <span>{{ form.phone }}</span>
-              </div>
-              <div class="contact-item">
-                <el-icon><Location /></el-icon>
-                <span>上次登录：{{ lastLoginTime }}</span>
-              </div>
-            </div>
-  
-            <!-- 快捷操作 -->
-            <div class="profile-actions">
-              <el-button type="primary" plain @click="activeTab = 'security'">
-                <el-icon><Lock /></el-icon>
-                安全设置
-              </el-button>
-              <el-button type="success" plain @click="activeTab = 'notify'">
-                <el-icon><Bell /></el-icon>
-                消息中心
-              </el-button>
-            </div>
-          </el-card>
+          </div>
         </div>
-  
-        <!-- 右侧信息表单 -->
-        <div class="profile-info">
-          <el-card>
-            <el-tabs v-model="activeTab" class="profile-tabs">
-              <!-- 基本资料 -->
-              <el-tab-pane label="基本资料" name="base">
-                <template #label>
-                  <el-icon><User /></el-icon>
-                  <span>基本资料</span>
-                </template>
-                <el-form
-                  ref="baseFormRef"
-                  :model="form"
-                  :rules="baseRules"
-                  label-width="90px"
-                  class="profile-form"
-                >
-                  <el-form-item label="用户名" prop="username">
-                    <el-input v-model="form.username" disabled>
-                      <template #prefix>
-                        <el-icon><User /></el-icon>
-                      </template>
-                    </el-input>
-                  </el-form-item>
-                  <el-form-item label="角色">
-                    <el-input value="管理员" disabled>
-                      <template #prefix>
-                        <el-icon><UserFilled /></el-icon>
-                      </template>
-                    </el-input>
-                  </el-form-item>
-                  <el-form-item label="邮箱" prop="email">
-                    <el-input v-model="form.email">
-                      <template #prefix>
-                        <el-icon><Message /></el-icon>
-                      </template>
-                    </el-input>
-                  </el-form-item>
-                  <el-form-item label="手机号" prop="phone">
-                    <el-input v-model="form.phone">
-                      <template #prefix>
-                        <el-icon><Phone /></el-icon>
-                      </template>
-                    </el-input>
-                  </el-form-item>
-                  <el-form-item>
-                    <el-button type="primary" @click="submitBaseInfo">
-                      <el-icon><Check /></el-icon>
-                      保存信息
-                    </el-button>
-                    <el-button @click="resetBaseInfo">
-                      <el-icon><Refresh /></el-icon>
-                      重置
-                    </el-button>
-                  </el-form-item>
-                </el-form>
-              </el-tab-pane>
-  
-              <!-- 账户安全 -->
-              <el-tab-pane label="账户安全" name="security">
-                <template #label>
-                  <el-icon><Lock /></el-icon>
-                  <span>账户安全</span>
-                </template>
-                
-                <!-- 修改密码 -->
-                <el-card class="security-card">
-                  <template #header>
-                    <div class="security-header">
-                      <el-icon><Key /></el-icon>
-                      <span>修改密码</span>
-                    </div>
-                  </template>
-                  <el-form
-                    ref="pwdFormRef"
-                    :model="pwdForm"
-                    :rules="pwdRules"
-                    label-width="110px"
-                    class="profile-form"
-                  >
-                    <el-form-item label="当前密码" prop="oldPwd">
-                      <el-input
-                        v-model="pwdForm.oldPwd"
-                        show-password
-                        autocomplete="off"
-                      />
-                    </el-form-item>
-                    <el-form-item label="新密码" prop="newPwd">
-                      <el-input
-                        v-model="pwdForm.newPwd"
-                        show-password
-                        autocomplete="off"
-                      />
-                    </el-form-item>
-                    <el-form-item label="确认新密码" prop="confirmPwd">
-                      <el-input
-                        v-model="pwdForm.confirmPwd"
-                        show-password
-                        autocomplete="off"
-                      />
-                    </el-form-item>
-                    <el-form-item>
-                      <el-button type="primary" @click="submitPassword">
-                        <el-icon><Check /></el-icon>
-                        修改密码
-                      </el-button>
-                      <el-button @click="resetPassword">
-                        <el-icon><Refresh /></el-icon>
-                        重置
-                      </el-button>
-                    </el-form-item>
-                  </el-form>
-                </el-card>
-  
-                <!-- 更改手机号 -->
-                <el-card class="security-card">
-                  <template #header>
-                    <div class="security-header">
-                      <el-icon><Phone /></el-icon>
-                      <span>手机号验证</span>
-                    </div>
-                  </template>
-                  <el-form
-                    ref="phoneFormRef"
-                    :model="phoneForm"
-                    :rules="phoneRules"
-                    label-width="110px"
-                    class="profile-form"
-                  >
-                    <el-form-item label="新手机号" prop="phone">
-                      <el-input v-model="phoneForm.phone" />
-                    </el-form-item>
-                    <el-form-item label="验证码" prop="code">
-                      <el-row :gutter="6">
-                        <el-col :span="12">
-                          <el-input v-model="phoneForm.code" />
-                        </el-col>
-                        <el-col :span="12">
-                          <el-button
-                            type="primary"
-                            :disabled="phoneCountdown > 0"
-                            @click="sendPhoneCode"
-                            style="width: 100%"
-                          >
-                            {{ phoneCountdown > 0 ? `${phoneCountdown}s 后重发` : '获取验证码' }}
-                          </el-button>
-                        </el-col>
-                      </el-row>
-                    </el-form-item>
-                    <el-form-item>
-                      <el-button type="primary" @click="submitPhone">
-                        <el-icon><Check /></el-icon>
-                        更改手机号
-                      </el-button>
-                    </el-form-item>
-                  </el-form>
-                </el-card>
-  
-                <!-- 更改邮箱 -->
-                <el-card class="security-card">
-                  <template #header>
-                    <div class="security-header">
-                      <el-icon><Message /></el-icon>
-                      <span>邮箱验证</span>
-                    </div>
-                  </template>
-                  <el-form
-                    ref="emailFormRef"
-                    :model="emailForm"
-                    :rules="emailRules"
-                    label-width="110px"
-                    class="profile-form"
-                  >
-                    <el-form-item label="新邮箱" prop="email">
-                      <el-input v-model="emailForm.email" />
-                    </el-form-item>
-                    <el-form-item label="验证码" prop="code">
-                      <el-row :gutter="6">
-                        <el-col :span="12">
-                          <el-input v-model="emailForm.code" />
-                        </el-col>
-                        <el-col :span="12">
-                          <el-button
-                            type="primary"
-                            :disabled="emailCountdown > 0"
-                            @click="sendEmailCode"
-                            style="width: 100%"
-                          >
-                            {{ emailCountdown > 0 ? `${emailCountdown}s 后重发` : '获取验证码' }}
-                          </el-button>
-                        </el-col>
-                      </el-row>
-                    </el-form-item>
-                    <el-form-item>
-                      <el-button type="primary" @click="submitEmail">
-                        <el-icon><Check /></el-icon>
-                        更改邮箱
-                      </el-button>
-                    </el-form-item>
-                  </el-form>
-                </el-card>
-              </el-tab-pane>
-  
-              <!-- 消息通知 -->
-              <el-tab-pane label="消息通知" name="notify">
-                <template #label>
-                  <el-icon><Bell /></el-icon>
-                  <span>消息通知</span>
-                </template>
-                <div class="notification-container">
-                  <el-empty v-if="notifications.length === 0" description="暂无消息通知" />
-                  <el-timeline v-else>
-                    <el-timeline-item
-                      v-for="(item, index) in notifications"
-                      :key="index"
-                      :type="item.type"
-                      :color="item.color"
-                      :timestamp="item.time"
-                    >
-                      <el-card class="notification-card">
-                        <template #header>
-                          <div class="notification-header">
-                            <el-icon><component :is="item.icon" /></el-icon>
-                            <span>{{ item.title }}</span>
-                          </div>
-                        </template>
-                        <div class="notification-content">{{ item.content }}</div>
-                      </el-card>
-                    </el-timeline-item>
-                  </el-timeline>
-                </div>
-              </el-tab-pane>
-            </el-tabs>
-          </el-card>
+
+        <div class="profile-stats">
+          <div class="stat-item">
+            <div class="stat-value">1024</div>
+            <div class="stat-label">用户数</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">11</div>
+            <div class="stat-label">系统公告</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">580</div>
+            <div class="stat-label">资源库</div>
+          </div>
         </div>
+
+        <div class="user-info-summary">
+          <div class="info-item">
+            <el-icon><Message /></el-icon>
+            <span>{{ form.email }}</span>
+          </div>
+          <div class="info-item">
+            <el-icon><Phone /></el-icon>
+            <span>{{ form.phone }}</span>
+          </div>
+          <div class="info-item">
+            <el-icon><School /></el-icon>
+            <span>{{ form.school }}</span>
+          </div>
+        </div>
+      </el-card>
+
+      <!-- 右侧信息编辑区域 -->
+      <div class="profile-edit-section">
+        <el-tabs type="border-card" class="custom-tabs" v-model="activeTabName">
+          <el-tab-pane label="基本资料" name="basic">
+            <el-form :model="form" :rules="rules" ref="formRef" label-width="100px" class="user-form">
+              <el-form-item label="昵称" prop="nickname">
+                <el-input v-model="form.nickname" placeholder="请输入昵称" prefix-icon="User" />
+              </el-form-item>
+              <el-form-item label="手机号" prop="phone">
+                <el-input v-model="form.phone" placeholder="请输入手机号" maxlength="11" prefix-icon="Phone" />
+              </el-form-item>
+              <el-form-item label="邮箱" prop="email">
+                <el-input v-model="form.email" placeholder="请输入邮箱" prefix-icon="Message" />
+              </el-form-item>
+              <el-form-item label="所在公司" prop="school">
+                <el-input v-model="form.school" placeholder="请输入公司名称" prefix-icon="School" />
+              </el-form-item>
+              <el-form-item label="管理领域" prop="subject">
+                <el-select v-model="form.subject" placeholder="请选择管理领域" style="width: 100%">
+                  <el-option label="平台管理" value="平台管理" />
+                  <el-option label="用户管理" value="用户管理" />
+                  <el-option label="内容审核" value="内容审核" />
+                  <el-option label="系统维护" value="系统维护" />
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <div class="form-actions">
+                  <el-button type="primary" @click="handleSave" :loading="saveLoading">保存信息</el-button>
+                  <el-button @click="handleReset">重置</el-button>
+                </div>
+              </el-form-item>
+            </el-form>
+          </el-tab-pane>
+          
+          <el-tab-pane label="账户安全" name="security">
+            <div class="security-section">
+              <div class="security-item">
+                <div class="security-item-info">
+                  <div class="security-item-title">
+                    <el-icon><Lock /></el-icon>
+                    <span>账户密码</span>
+                  </div>
+                  <div class="security-item-desc">定期修改密码可以保护账户安全</div>
+                </div>
+                <el-button type="primary" @click="pwdDialog = true">修改密码</el-button>
+              </div>
+              
+              <div class="security-item">
+                <div class="security-item-info">
+                  <div class="security-item-title">
+                    <el-icon><Phone /></el-icon>
+                    <span>手机验证</span>
+                  </div>
+                  <div class="security-item-desc">已绑定手机: {{ form.phone }}</div>
+                </div>
+                <el-button type="primary" plain>更换手机</el-button>
+              </div>
+              
+              <div class="security-item">
+                <div class="security-item-info">
+                  <div class="security-item-title">
+                    <el-icon><Message /></el-icon>
+                    <span>邮箱验证</span>
+                  </div>
+                  <div class="security-item-desc">已绑定邮箱: {{ form.email }}</div>
+                </div>
+                <el-button type="primary" plain>更换邮箱</el-button>
+              </div>
+            </div>
+          </el-tab-pane>
+          
+          <el-tab-pane label="消息通知" name="notifications">
+            <div class="notification-settings">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <div class="setting-title">系统通知</div>
+                  <div class="setting-desc">接收系统更新、维护等通知</div>
+                </div>
+                <el-switch v-model="notificationSettings.system" active-color="#3d5afe" />
+              </div>
+              
+              <div class="setting-item">
+                <div class="setting-info">
+                  <div class="setting-title">资源更新提醒</div>
+                  <div class="setting-desc">有新的教学资源时通知我</div>
+                </div>
+                <el-switch v-model="notificationSettings.resources" active-color="#3d5afe" />
+              </div>
+              
+              <div class="setting-item">
+                <div class="setting-info">
+                  <div class="setting-title">协作邀请</div>
+                  <div class="setting-desc">接收新的协作邀请通知</div>
+                </div>
+                <el-switch v-model="notificationSettings.collaboration" active-color="#3d5afe" />
+              </div>
+              
+              <div class="setting-item">
+                <div class="setting-info">
+                  <div class="setting-title">邮件通知</div>
+                  <div class="setting-desc">通过邮件接收重要通知</div>
+                </div>
+                <el-switch v-model="notificationSettings.email" active-color="#3d5afe" />
+              </div>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
       </div>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref, reactive } from 'vue'
-  import { ElMessage } from 'element-plus'
-  import {
-    User,
-    UserFilled,
-    Message,
-    Phone,
-    Camera,
-    CircleCheck,
-    Document,
-    List,
-    Location,
-    Lock,
-    Bell,
-    Key,
-    Check,
-    Refresh
-  } from '@element-plus/icons-vue'
-  
-  /** ───────── state ───────── */
-  const activeTab = ref('base')
-  
-  // 统计数据
-  const stats = reactive({
-    userCount: 20,
-    resourceCount: 156,
-    logCount: 89
-  })
-  
-  // 最后登录时间
-  const lastLoginTime = ref('2025-01-22 09:00:00')
-  
-  // 消息通知
-  const notifications = ref([
-    {
-      type: 'primary',
-      color: '#409EFF',
-      icon: 'Bell',
-      title: '系统通知',
-      content: '系统将于今晚22:00进行例行维护，请提前做好相关准备。',
-      time: '2025-01-22 10:00:00'
-    },
-    {
-      type: 'success',
-      color: '#67C23A',
-      icon: 'Check',
-      title: '操作成功',
-      content: '您已成功更新个人信息。',
-      time: '2025-01-21 15:30:00'
-    },
-    {
-      type: 'warning',
-      color: '#E6A23C',
-      icon: 'Warning',
-      title: '安全提醒',
-      content: '检测到您的账号在新设备上登录，请注意账号安全。',
-      time: '2025-01-20 09:15:00'
+
+    <!-- 修改密码对话框 -->
+    <el-dialog v-model="pwdDialog" title="修改密码" width="400px" destroy-on-close>
+      <el-form :model="pwdForm" :rules="pwdRules" ref="pwdFormRef" label-width="100px">
+        <el-form-item label="旧密码" prop="oldPwd">
+          <el-input v-model="pwdForm.oldPwd" type="password" placeholder="请输入旧密码" show-password />
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPwd">
+          <el-input v-model="pwdForm.newPwd" type="password" placeholder="请输入新密码" show-password />
+        </el-form-item>
+        <el-form-item label="确认新密码" prop="confirmPwd">
+          <el-input v-model="pwdForm.confirmPwd" type="password" placeholder="请再次输入新密码" show-password />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="pwdDialog = false">取消</el-button>
+          <el-button type="primary" @click="handlePwdSave" :loading="pwdLoading">确认修改</el-button>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { User, EditPen, Lock, Phone, Message, School } from '@element-plus/icons-vue'
+import { userApi } from '@/api/user'
+import type { UserInfo, UserUpdateRequest } from '@/types/user'
+import type { FormInstance } from 'element-plus'
+import { mockUserInfo, mockApiResponse } from '@/api/mock'
+import lockBackImg from '@/assets/image/lock-back.jpg'
+import { useRoute } from 'vue-router'
+
+const formRef = ref<FormInstance>()
+const pwdFormRef = ref<FormInstance>()
+const pwdDialog = ref(false)
+const saveLoading = ref(false)
+const pwdLoading = ref(false)
+const activeTabName = ref('basic')
+const route = useRoute()
+
+// 是否使用模拟数据
+const useMockData = true;
+
+// 用户表单数据
+const form = ref<UserInfo>({
+  id: 0,
+  username: '',
+  nickname: '超级管理员',
+  avatarUrl: '',
+  phone: '13800000000',
+  email: 'Mrsli@example.com',
+  school: '计算机科学大学',
+  subject: 'computer_science',
+  role: 'admin'
+})
+
+// 通知设置
+const notificationSettings = ref({
+  system: true,
+  resources: true,
+  collaboration: true,
+  email: false
+})
+
+// 表单验证规则
+const rules = {
+  nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+  ],
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { validator: (rule: any, value: string, callback: any) => {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(value)) {
+        callback(new Error('邮箱格式不正确'));
+      } else {
+        callback();
+      }
+    }, trigger: 'blur' }
+  ],
+  school: [{ required: true, message: '请输入学校', trigger: 'blur' }],
+  subject: [{ required: true, message: '请选择管理科目', trigger: 'change' }]
+}
+
+// 密码表单
+const pwdForm = ref({
+  oldPwd: '',
+  newPwd: '',
+  confirmPwd: ''
+})
+
+// 密码表单验证规则
+const pwdRules = {
+  oldPwd: [{ required: true, message: '请输入旧密码', trigger: 'blur' }],
+  newPwd: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码至少6位', trigger: 'blur' }
+  ],
+  confirmPwd: [
+    { required: true, message: '请确认新密码', trigger: 'blur' },
+    { validator: (rule: any, value: string, callback: any) => {
+      if (value !== pwdForm.value.newPwd) {
+        callback(new Error('两次输入密码不一致'))
+      } else {
+        callback()
+      }
+    }, trigger: 'blur' }
+  ]
+}
+
+// 组件挂载时获取用户信息，并检查路由哈希
+onMounted(async () => {
+  try {
+    await getUserInfo()
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }
+
+  if (route.hash === '#security') {
+    activeTabName.value = 'security';
+  }
+})
+
+// 获取用户信息
+const getUserInfo = async () => {
+  try {
+    saveLoading.value = true
+    
+    let userData: UserInfo;
+    
+    if (useMockData) {
+      // 使用模拟数据
+      const response = await mockApiResponse(mockUserInfo('admin'));
+      userData = response.data;
+    } else {
+      // 调用实际API
+      const response = await userApi.getUserInfo();
+      userData = response.data;
     }
-  ])
+    
+    // 如果获取数据成功，则使用获取的数据
+    form.value = {
+      ...userData,
+      // 如果返回的头像URL为空，使用默认头像
+      avatarUrl: userData.avatarUrl || lockBackImg
+    }
+    
+    saveLoading.value = false
+  } catch (error) {
+    saveLoading.value = false
+    console.error('获取用户信息失败:', error)
+    ElMessage.error('获取用户信息失败，将使用默认数据')
+    
+    // 使用默认数据
+    form.value = {
+      id: 0,
+      username: 'admin',
+      nickname: '超级管理员',
+      avatarUrl: lockBackImg,
+      phone: '13800000000',
+      email: 'Mrsli@example.com',
+      school: '计算机科学大学',
+      subject: 'computer_science',
+      role: 'admin'
+    }
+    
+    // 模拟成功，不影响用户体验
+    ElMessage.success('已加载默认数据')
+  }
+}
+
+// 处理头像更新
+const handleAvatarChange = async (file: any) => {
+  try {
+    let avatarUrl: string;
+    
+    if (useMockData) {
+      // 使用模拟数据，直接用FileReader预览
+      const reader = new FileReader();
+      reader.onload = e => {
+        form.value.avatarUrl = e.target?.result as string;
+        ElMessage.success('头像上传成功');
+      };
+      reader.readAsDataURL(file.raw);
+      return;
+    } else {
+      // 调用实际API
+      const response = await userApi.uploadAvatar(file.raw);
+      form.value.avatarUrl = response.data.avatarUrl;
+      ElMessage.success('头像上传成功');
+    }
+  } catch (error) {
+    console.error('头像上传失败:', error);
+    ElMessage.error('头像上传失败');
+    
+    // 使用FileReader显示本地预览（备用方案）
+    const reader = new FileReader();
+    reader.onload = e => {
+      form.value.avatarUrl = e.target?.result as string;
+    };
+    reader.readAsDataURL(file.raw);
+  }
+}
+
+// 保存用户信息
+const handleSave = async () => {
+  if (!formRef.value) return;
   
-  // avatar
-  const avatarUrl = ref('/src/assets/image/lock-back.jpg')
-  const avatarInput = ref()
+  try {
+    await formRef.value.validate();
+    saveLoading.value = true;
+    
+    // 提取需要更新的字段
+    const updateData: UserUpdateRequest = {
+      nickname: form.value.nickname,
+      phone: form.value.phone,
+      email: form.value.email,
+      school: form.value.school,
+      subject: form.value.subject
+    };
+    
+    if (useMockData) {
+      // 使用模拟数据
+      await mockApiResponse({...mockUserInfo('admin'), ...updateData});
+      
+      // 更新本地表单数据
+      form.value = {
+        ...form.value,
+        ...updateData
+      };
+    } else {
+      // 调用实际API
+      const response = await userApi.updateUser(updateData);
+      
+      // 更新本地表单数据
+      form.value = {
+        ...form.value,
+        ...response.data
+      };
+    }
+    
+    ElMessage.success('保存成功');
+    saveLoading.value = false;
+  } catch (error: any) {
+    saveLoading.value = false;
+    console.error('保存失败:', error);
+    ElMessage.error('保存失败，请检查输入信息');
+  }
+}
+
+// 重置表单
+const handleReset = () => {
+  if (!formRef.value) return
+  formRef.value.resetFields()
+  getUserInfo()
+}
+
+// 保存密码修改
+const handlePwdSave = async () => {
+  if (!pwdFormRef.value) return;
   
-  // base info
-  const form = reactive({
-    username: 'admin',
-    email: 'admin@example.com',
-    phone: '13800000000'
-  })
-  const baseRules = {
-    email: [
-      { required: true, message: '请输入邮箱', trigger: 'blur' },
-      { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'change'] }
-    ],
-    phone: [
-      { required: true, message: '请输入手机号', trigger: 'blur' },
-      {
-        pattern: /^1\d{10}$/,
-        message: '手机号格式不正确',
-        trigger: ['blur', 'change']
-      }
-    ]
+  try {
+    await pwdFormRef.value.validate();
+    pwdLoading.value = true;
+    
+    if (useMockData) {
+      // 模拟成功响应
+      await mockApiResponse({ success: true, message: '密码修改成功' });
+    } else {
+      // 调用实际API
+      await userApi.changePassword({
+        oldPassword: pwdForm.value.oldPwd,
+        newPassword: pwdForm.value.newPwd
+      });
+    }
+    
+    pwdDialog.value = false;
+    pwdForm.value = { oldPwd: '', newPwd: '', confirmPwd: '' };
+    ElMessage.success('密码修改成功');
+    pwdLoading.value = false;
+  } catch (error: any) {
+    pwdLoading.value = false;
+    console.error('密码修改失败:', error);
+    if (error.response && error.response.data && error.response.data.message) {
+      ElMessage.error(error.response.data.message);
+    } else {
+      ElMessage.error('密码修改失败，请检查原密码是否正确');
+    }
   }
-  const baseFormRef = ref()
+}
+</script>
+
+<style scoped lang="scss">
+.profile-container {
+  padding: 24px;
+  background-color: #ffffff;
+  min-height: calc(100vh - 60px);
+  position: relative;
+}
+
+.profile-container::before {
+  content: none;
+}
+
+.profile-header {
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #ebeef5;
+  position: relative;
+  z-index: 1;
+}
+
+.profile-title {
+  font-size: 28px;
+  color: #303133;
+  margin: 0;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.profile-subtitle {
+  font-size: 15px;
+  color: #606266;
+}
+
+.profile-content {
+  display: flex;
+  gap: 30px;
+  position: relative;
+  z-index: 1;
   
-  // password
-  const pwdForm = reactive({
-    oldPwd: '',
-    newPwd: '',
-    confirmPwd: ''
-  })
-  const pwdRules = {
-    oldPwd: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
-    newPwd: [
-      { required: true, message: '请输入新密码', trigger: 'blur' },
-      { min: 6, message: '至少 6 位字符', trigger: 'blur' }
-    ],
-    confirmPwd: [
-      { required: true, message: '请再次输入新密码', trigger: 'blur' },
-      {
-        validator: (_, v) =>
-          v === pwdForm.newPwd
-            ? Promise.resolve()
-            : Promise.reject('两次输入密码不一致'),
-        trigger: 'blur'
-      }
-    ]
+  @media (max-width: 992px) {
+    flex-direction: column;
   }
-  const pwdFormRef = ref()
+}
+
+.profile-card {
+  width: 340px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
   
-  // phone
-  const phoneForm = reactive({
-    phone: '',
-    code: ''
-  })
-  const phoneRules = {
-    phone: [
-      { required: true, message: '请输入新手机号', trigger: 'blur' },
-      {
-        pattern: /^1\d{10}$/,
-        message: '手机号格式不正确',
-        trigger: ['blur', 'change']
-      }
-    ],
-    code: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
-  }
-  const phoneFormRef = ref()
-  const phoneCountdown = ref(0)
-  let phoneTimer = null
-  
-  // email
-  const emailForm = reactive({
-    email: '',
-    code: ''
-  })
-  const emailRules = {
-    email: [
-      { required: true, message: '请输入新邮箱', trigger: 'blur' },
-      { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'change'] }
-    ],
-    code: [{ required: true, message: '请输入验证码', trigger: 'blur' }]
-  }
-  const emailFormRef = ref()
-  const emailCountdown = ref(0)
-  let emailTimer = null
-  
-  /** ───────── methods ───────── */
-  // avatar
-  function triggerAvatarSelect() {
-    avatarInput.value?.click()
-  }
-  function onAvatarSelected(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    // preview
-    avatarUrl.value = URL.createObjectURL(file)
-    // TODO: upload file to backend
-    ElMessage.success('头像已更新（仅本地预览）')
-  }
-  
-  // base info
-  function submitBaseInfo() {
-    baseFormRef.value.validate(async (valid) => {
-      if (!valid) return
-      // TODO: call API
-      ElMessage.success('基本信息已保存')
-    })
-  }
-  function resetBaseInfo() {
-    baseFormRef.value.resetFields()
-  }
-  
-  // password
-  function submitPassword() {
-    pwdFormRef.value.validate(async (valid) => {
-      if (!valid) return
-      // TODO: call API
-      ElMessage.success('密码修改成功')
-      resetPassword()
-    })
-  }
-  function resetPassword() {
-    pwdFormRef.value.resetFields()
-  }
-  
-  // phone
-  function sendPhoneCode() {
-    phoneFormRef.value.validateField('phone', async (err) => {
-      if (err) return
-      phoneCountdown.value = 60
-      phoneTimer = setInterval(() => {
-        phoneCountdown.value--
-        if (phoneCountdown.value === 0) clearInterval(phoneTimer)
-      }, 1000)
-      // TODO: call API
-      ElMessage.success('验证码已发送')
-    })
-  }
-  function submitPhone() {
-    phoneFormRef.value.validate(async (valid) => {
-      if (!valid) return
-      // TODO: call API
-      ElMessage.success('手机号已更新')
-      phoneCountdown.value = 0
-      clearInterval(phoneTimer)
-      Object.assign(form, { phone: phoneForm.phone })
-      phoneFormRef.value.resetFields()
-    })
-  }
-  
-  // email
-  function sendEmailCode() {
-    emailFormRef.value.validateField('email', async (err) => {
-      if (err) return
-      emailCountdown.value = 60
-      emailTimer = setInterval(() => {
-        emailCountdown.value--
-        if (emailCountdown.value === 0) clearInterval(emailTimer)
-      }, 1000)
-      // TODO: call API
-      ElMessage.success('验证码已发送')
-    })
-  }
-  function submitEmail() {
-    emailFormRef.value.validate(async (valid) => {
-      if (!valid) return
-      // TODO: call API
-      ElMessage.success('邮箱已更新')
-      emailCountdown.value = 0
-      clearInterval(emailTimer)
-      Object.assign(form, { email: emailForm.email })
-      emailFormRef.value.resetFields()
-    })
-  }
-  </script>
-  
-  <style scoped>
-  .admin-profile-wrapper {
-    padding: 32px;
-    background: #f5f7fa;
-    min-height: calc(100vh - 84px);
-  }
-  
-  .profile-main {
-    display: flex;
-    max-width: 1200px;
-    margin: 0 auto;
-    gap: 32px;
-  }
-  
-  .profile-card {
-    width: 320px;
-    min-width: 260px;
-  }
-  
-  .profile-card-content {
-    border-radius: 8px;
-    overflow: hidden;
-    transition: all 0.3s;
-  }
-  
-  .profile-card-content:hover {
+  &:hover {
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
     transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
   
-  /* 头像区域 */
-  .profile-header {
-    padding: 32px 20px;
-    background: linear-gradient(135deg, var(--el-color-primary) 0%, var(--el-color-primary-light-3) 100%);
-    color: white;
-    text-align: center;
+  @media (max-width: 992px) {
+    width: 100%;
   }
+}
+
+.profile-card-header {
+  background: linear-gradient(90deg, #3d5afe, #8c44ff);
+  padding: 30px 0 20px;
+  border-radius: 16px 16px 0 0;
+}
+
+.profile-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+  border: 4px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
   
-  .avatar-block {
-    position: relative;
-    display: inline-block;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
-  
-  .avatar-block:hover .avatar-upload-icon {
+  &:hover .avatar-hover-mask {
     opacity: 1;
   }
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  font-size: 60px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-hover-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.3s;
   
-  .avatar-upload-icon {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.5);
-    color: white;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: all 0.3s;
-  }
-  
-  .hidden-input {
-    display: none;
-  }
-  
-  .admin-info {
-    margin-top: 16px;
-  }
-  
-  .admin-name {
+  .el-icon {
     font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
   
-  .role-tag {
-    margin-bottom: 8px;
-    padding: 4px 12px;
-    border-radius: 16px;
+  span {
+    font-size: 14px;
   }
+}
+
+.user-name {
+  font-size: 22px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.user-role {
+  margin-bottom: 10px;
+}
+
+.profile-stats {
+  display: flex;
+  justify-content: space-between;
+  padding: 24px;
+  background-color: #fff;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.stat-item {
+  text-align: center;
+  flex: 1;
+  position: relative;
   
-  .admin-status {
-    margin-top: 8px;
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 10%;
+    height: 80%;
+    width: 1px;
+    background-color: #f0f0f0;
   }
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #3d5afe;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #606266;
+}
+
+.user-info-summary {
+  padding: 16px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #606266;
   
-  /* 统计信息 */
-  .profile-stats {
-    padding: 20px;
-    background: white;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .stat-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 16px;
-  }
-  
-  .stat-item:last-child {
+  &:last-child {
     margin-bottom: 0;
   }
   
-  .stat-item .el-icon {
-    font-size: 24px;
-    color: var(--el-color-primary);
-    margin-right: 12px;
-  }
-  
-  .stat-content {
-    flex: 1;
-  }
-  
-  .stat-num {
-    font-size: 20px;
-    font-weight: bold;
-    color: #303133;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  
-  .stat-label {
-    font-size: 13px;
+  .el-icon {
+    margin-right: 8px;
     color: #909399;
   }
+}
+
+.quick-actions {
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  background-color: #fff;
+  margin-top: auto;
+}
+
+.profile-edit-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-tabs {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-form {
+  padding: 24px 20px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.security-section {
+  padding: 20px;
+}
+
+.security-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #ebeef5;
   
-  /* 联系信息 */
-  .profile-contact {
-    padding: 20px;
-    background: white;
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.security-item-info {
+  flex: 1;
+}
+
+.security-item-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #303133;
+}
+
+.security-item-desc {
+  font-size: 14px;
+  color: #909399;
+}
+
+.notification-settings {
+  padding: 20px;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #ebeef5;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.setting-info {
+  flex: 1;
+}
+
+.setting-title {
+  font-size: 16px;
+  margin-bottom: 6px;
+  color: #303133;
+  font-weight: 500;
+}
+
+.setting-desc {
+  font-size: 14px;
+  color: #909399;
+}
+
+:deep(.el-tabs__header) {
+  margin-bottom: 0;
+}
+
+:deep(.el-tabs__nav) {
+  border-radius: 8px 8px 0 0;
+}
+
+:deep(.el-tabs__item) {
+  padding: 0 24px;
+  height: 50px;
+  line-height: 50px;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+
+:deep(.el-tabs__item.is-active) {
+  font-weight: 600;
+}
+
+:deep(.el-dialog__header) {
+  padding: 24px;
+  margin-right: 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+:deep(.el-dialog__title) {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+:deep(.el-dialog__body) {
+  padding: 24px;
+}
+
+:deep(.el-dialog__footer) {
+  padding: 16px 24px 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
+:deep(.el-form-item) {
+  margin-bottom: 24px;
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-select) {
+  box-shadow: 0 0 0 1px #dcdfe6 inset;
+  border-radius: 4px;
+  transition: all 0.2s;
+  
+  &:hover {
+    box-shadow: 0 0 0 1px #c0c4cc inset;
   }
   
-  .contact-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 12px;
-    color: #606266;
+  &.is-focus {
+    box-shadow: 0 0 0 1px #3d5afe inset;
   }
-  
-  .contact-item:last-child {
-    margin-bottom: 0;
-  }
-  
-  .contact-item .el-icon {
-    margin-right: 8px;
-    color: var(--el-color-primary);
-  }
-  
-  /* 快捷操作 */
-  .profile-actions {
-    padding: 20px;
-    background: white;
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-  }
-  
-  /* 右侧信息 */
-  .profile-info {
-    flex: 1;
-  }
-  
-  .profile-tabs {
-    :deep(.el-tabs__item) {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-  }
-  
-  .profile-form {
-    max-width: 460px;
-    margin: 0 auto;
-  }
-  
-  /* 安全设置卡片 */
-  .security-card {
-    margin-bottom: 20px;
-  }
-  
-  .security-card:last-child {
-    margin-bottom: 0;
-  }
-  
-  .security-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 16px;
-    font-weight: bold;
-  }
-  
-  /* 消息通知 */
-  .notification-container {
-    padding: 20px;
-  }
-  
-  .notification-card {
-    margin-bottom: 16px;
-  }
-  
-  .notification-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: bold;
-  }
-  
-  .notification-content {
-    color: #606266;
-    line-height: 1.6;
-  }
-  
-  /* 响应式布局 */
-  @media screen and (max-width: 768px) {
-    .profile-main {
-      flex-direction: column;
-    }
-    
-    .profile-card {
-      width: 100%;
-    }
-    
-    .profile-form {
-      max-width: 100%;
-    }
-  }
-  </style>
-  
+}
+
+:deep(.el-button) {
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+:deep(.el-tabs__content) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.el-tab-pane) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+</style>

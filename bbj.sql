@@ -91,6 +91,6 @@ CREATE TABLE `users`  (
 -- Records of users
 -- ----------------------------
 INSERT INTO `users` VALUES (1, 'admin', '123456', '李老师', 'https://pic4.zhimg.com/80/v2-3dbd399559982ab3e3e0e5d621268c12_720w.webp', '13800000000', 'admin@example.com', '计算机科学大学', 'computer_science', '2023-04-01 10:00:00', '2025-05-02 09:47:46', '2023-04-01 10:00:00', 'ADMIN');
-INSERT INTO `users` VALUES (2, 'teacher', '123456', '张老师', 'https://pic1.zhimg.com/80/v2-d1a96aac1a7778cfe98a98b3fdba39cf_720w.webp', '13900000000', 'teacher@example.com', '计算机科学大学', 'programming', '2023-04-01 11:00:00', '2025-05-02 09:47:54', '2023-04-01 11:00:00', 'USER');
+INSERT INTO `users` VALUES (2, 'teacher', '123456', '张老师', 'https://pic1.zhimg.com/80/v2-d1a96aac1a7778cfe98a98b3fdba39cf_720w.webp', '13900000000', 'teacher@example.com', '计算机科学大学', 'programming', '2023-04-01 11:00:00', '2025-05-02 09:47:54', '2023-04-01 11:00:00', 'TEACHER');
 
 SET FOREIGN_KEY_CHECKS = 1;

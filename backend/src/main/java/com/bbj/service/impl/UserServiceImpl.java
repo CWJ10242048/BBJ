@@ -96,6 +96,12 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
     
+    @Override
+    public User findByUsernameAndRole(String username, String role) {
+        return userRepository.findByUsernameAndRole(username, role)
+                .orElse(null);
+    }
+    
     // 转换实体为DTO
     private UserDTO convertToDTO(User user) {
         return new UserDTO(

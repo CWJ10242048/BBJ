@@ -50,16 +50,16 @@
                     
                     <!-- 注册和忘记密码 -->
                     <div class="login-links">
-                        <a href="javascript:void(0)">注册账号</a>
+                        <el-button link @click="handleRegister">注册账号</el-button>
                         <span class="divider">|</span>
-                        <a href="javascript:void(0)">忘记密码？</a>
+                        <el-button link @click="handleForgotPassword">忘记密码？</el-button>
                     </div>
                 </div>
             </div>
             
             <!-- 底部版权信息 -->
             <div class="footer">
-                <p>Copyright © 2024 备倍佳AI备课系统 版权所有</p>
+                <p>Copyright © 2025 备倍佳AI备课系统 版权所有</p>
             </div>
         </div>
     </div>
@@ -71,6 +71,10 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
+import axios from 'axios'
+
+// 配置axios默认值
+axios.defaults.baseURL = 'http://localhost:3000'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -82,60 +86,83 @@ const rememberPassword = ref(false)
 const autoLogin = ref(false)
 
 const roles = [
-                { label: '学生', value: 'student' },
-                { label: '教师', value: 'teacher' },
-                { label: '管理员', value: 'admin' }
-            ]
+    { label: '教师', value: 'teacher' },
+    { label: '管理员', value: 'admin' }
+]
 
-const login = () => {
+const handleRegister = () => {
+    ElMessage({
+        message: '注册功能开发中',
+        type: 'info'
+    })
+}
+
+const handleForgotPassword = () => {
+    ElMessage({
+        message: '密码找回功能开发中',
+        type: 'info'
+    })
+}
+
+const login = async () => {
     if (!username.value) {
         ElMessage({
-                    message: '请输入用户名',
-                    type: 'warning'
+            message: '请输入用户名',
+            type: 'warning'
         })
         return
-            }
+    }
     
     if (!password.value) {
         ElMessage({
-                    message: '请输入密码',
-                    type: 'warning'
+            message: '请输入密码',
+            type: 'warning'
         })
         return
-            }
-
-    // 设置模拟的token和用户信息
-    const mockToken = 'mock_token_' + Date.now()
-    const mockUser = {
-        username: username.value || '默认用户',
-        role: role.value,
-        avatar: '@/assets/image/logo.png'
     }
 
-    // 存储token和用户信息
-    userStore.setToken(mockToken)
-    userStore.setUser(JSON.stringify(mockUser))
-    
-    // 显示登录成功消息
-    ElMessage({
-                        message: '登录成功',
-                        type: 'success'
-    })
+    try {
+        // 调用后端登录接口
+        const response = await axios.post('http://localhost:3000/api/login', {
+            username: username.value,
+            password: password.value,
+            role: role.value
+        })
 
-    // 根据角色跳转到不同页面
-    console.log('当前角色:', role.value)
-    if (role.value === 'admin') {
-        console.log('跳转到管理员页面')
-        router.push('/admin/function').catch(err => {
-            console.error('路由跳转失败:', err)
-            ElMessage.error('页面跳转失败，请刷新重试')
+        if (response.data.code === 200) {
+            const userData = response.data.data
+            
+            // 根据角色设置不同的头像
+            if (userData.role === 'ADMIN') {
+                userData.avatarUrl = '/src/assets/image/admin.png'
+            } else {
+                userData.avatarUrl = '/src/assets/image/lock-back.jpg'
+            }
+            
+            // 存储token和用户信息
+            userStore.setToken(response.data.token)
+            userStore.setUser(JSON.stringify(userData))
+            
+            // 显示登录成功消息
+            ElMessage({
+                message: '登录成功',
+                type: 'success'
             })
-    } else if (role.value === 'teacher') {
-        console.log('跳转到教师页面')
-        router.push('/home')
-    } else {
-        console.log('跳转到默认页面')
-        router.push('/home')
+
+            // 根据角色跳转到不同页面
+            if (userData.role === 'ADMIN') {
+                console.log('进入管理员判断分支')
+                router.push('/admin/function')
+            } else {
+                console.log('进入教师判断分支')
+                router.push('/home')
+            }
+        } else {
+            ElMessage.error(response.data.message || '登录失败')
+        }
+    } catch (error) {
+        console.error('登录失败:', error)
+        ElMessage.error('登录失败，请检查用户名和密码')
     }
 }
 </script>

@@ -310,8 +310,8 @@ const getUserInfo = async () => {
     let userData: UserInfo;
     
     if (useMockData) {
-      // 使用模拟数据
-      const response = await mockApiResponse(mockUserInfo);
+      // 使用教师 mock 数据
+      const response = await mockApiResponse(mockUserInfo('teacher'));
       userData = response.data;
     } else {
       // 调用实际API
@@ -402,7 +402,7 @@ const handleSave = async () => {
     
     if (useMockData) {
       // 使用模拟数据
-      await mockApiResponse({...mockUserInfo, ...updateData});
+      await mockApiResponse({...mockUserInfo('teacher'), ...updateData});
       
       // 更新本地表单数据
       form.value = {

@@ -224,13 +224,13 @@ router.beforeEach((to, from, next) => {
   }
 
   // 检查角色权限
-  if (to.path.startsWith('/admin') && userRole !== 'admin') {
+  if (to.path.startsWith('/admin') && userRole !== 'ADMIN') {
     next('/teacher/dashboard')
     return
   }
 
-  if (to.path.startsWith('/teacher') && userRole !== 'teacher') {
-    next('/admin/dashboard')
+  if (to.path.startsWith('/teacher') && userRole !== 'TEACHER') {
+    next('/admin/function')
     return
   }
 

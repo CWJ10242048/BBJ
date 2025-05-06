@@ -3,7 +3,8 @@
     <div v-if="appStore.isLocked" class="lock-screen-overlay">
       <div class="lock-content">
         <el-avatar :size="80" :src="(userStore.user as any)?.avatarUrl || userStore.user?.avatar || lockBackImg" class="user-avatar"/>
-        <div class="user-name">{{ (userStore.user as any)?.nickname || userStore.user?.userName || '教师' }}</div>
+        <!-- <div class="user-name">{{ (userStore.user as any)?.nickname || userStore.user?.userName || '教师' }}</div> -->
+        <div class="user-role">{{ userStore.user?.role === 'admin' ? '管理员' : '教师' }}</div>
         <div class="lock-tip">屏幕已锁定</div>
         <el-input
           v-model="password"
@@ -87,6 +88,13 @@ const handleUnlock = () => {
   font-weight: bold;
   color: #333;
   margin-bottom: 8px;
+}
+
+.user-role {
+  font-size: 15px;
+  color: #409EFF;
+  margin-bottom: 6px;
+  font-weight: 500;
 }
 
 .lock-tip {

@@ -335,7 +335,7 @@
       </div>
       <div class="ai-assistant-panel" v-show="aiExpanded">
         <div class="ai-panel-header">
-          <div class="ai-panel-title">教育AI助手</div>
+          <div class="ai-panel-title">备倍佳-AI备课平台</div>
           <el-button size="small" type="primary" plain>新建会话</el-button>
         </div>
         <div class="ai-panel-content">

@@ -6,7 +6,7 @@
           <el-icon><Expand v-if="collapse" /><Fold v-else /></el-icon>
         </div>
         <div class="logo-container">
-          <span class="app-name">备倍佳</span>
+          <span class="app-name">备倍佳-AI备课平台</span>
         </div>
       </div>
       
@@ -367,9 +367,9 @@ const displayName = computed(() => {
 // 计算头像显示
 const displayAvatar = computed(() => {
   if (user.value?.role === 'ADMIN') {
-    return '/src/assets/image/admin.png'
+    return adminAvatar
   }
-  return '/src/assets/image/lock-back.jpg'
+  return teacherAvatar
 })
 </script>
 

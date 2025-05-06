@@ -73,8 +73,8 @@ import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import axios from 'axios'
 
-// 配置axios默认值
-axios.defaults.baseURL = 'http://localhost:3000'
+// 配置axios默认值 - 确保使用正确的地址和端口
+axios.defaults.baseURL = 'http://47.97.217.4:8081'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -122,8 +122,8 @@ const login = async () => {
     }
 
     try {
-        // 调用后端登录接口
-        const response = await axios.post('http://localhost:3000/api/login', {
+        // 调用后端登录接口 - 使用配置的baseURL
+        const response = await axios.post('/api/login', {
             username: username.value,
             password: password.value,
             role: role.value
@@ -134,9 +134,9 @@ const login = async () => {
             
             // 根据角色设置不同的头像
             if (userData.role === 'ADMIN') {
-                userData.avatarUrl = '/src/assets/image/admin.png'
+                userData.avatarUrl = './assets/image/admin.png'
             } else {
-                userData.avatarUrl = '/src/assets/image/lock-back.jpg'
+                userData.avatarUrl = './assets/image/lock-back.jpg'
             }
             
             // 存储token和用户信息

@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const dbConfig = {
     host: 'localhost',
     user: 'root',
-    password: '123456',
+    password: '200120',
     database: 'bbj'
 };
 
